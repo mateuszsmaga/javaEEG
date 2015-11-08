@@ -81,6 +81,7 @@ public class Main extends SimpleApplication {
         fpp.addFilter(bloom);
         viewPort.addProcessor(fpp);
 
+        setDisplayStatView(false);
        
         //Tworzenie HUD
         createHUD();
