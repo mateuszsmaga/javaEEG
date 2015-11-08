@@ -209,15 +209,15 @@ public class Main extends SimpleApplication {
         
         //Dodawanie czesci mozgu
         /*
-        addNewBrainPart("Models/brain_left.j3o", "Textures/brain_left.png");
-        addNewBrainPart("Models/brain_right.j3o", "Textures/brain_right.png");
-        addNewBrainPart("Models/back_left.j3o", "Textures/back_left.png");
-        addNewBrainPart("Models/back_right.j3o", "Textures/back_right.png");
-        addNewBrainPart("Models/center.j3o", "Textures/center.png");
+        addNewBrainPart("Models/old_brain/brain_left.j3o", "Textures/brain_left.png");
+        addNewBrainPart("Models/old_brain/brain_right.j3o", "Textures/brain_right.png");
+        addNewBrainPart("Models/old_brain/back_left.j3o", "Textures/back_left.png");
+        addNewBrainPart("Models/old_brain/back_right.j3o", "Textures/back_right.png");
+        addNewBrainPart("Models/old_brain/center.j3o", "Textures/center.png");
         */
         
-        addNewBrainPart("Models/left_half.obj", "Textures/lh_pial.png");
-        addNewBrainPart("Models/right_half.obj", "Textures/rh_pial.png");
+        addNewBrainPart("Models/new_brain/left_half.j3o", "Textures/lh_pial.png");
+        addNewBrainPart("Models/new_brain/right_half.j3o", "Textures/rh_pial.png");
         
         //Podczepienie zaczepu do rootNode
         rootNode.attachChild(pivot); 
