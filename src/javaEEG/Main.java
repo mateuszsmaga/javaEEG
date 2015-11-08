@@ -61,6 +61,7 @@ public class Main extends SimpleApplication {
         settings.setResolution(1280, 720);
         settings.setTitle("EEG");
         settings.setAudioRenderer(null);
+        settings.setFrameRate(60);
         //Stworzenie aplikacji i uruchomienie jej
         Main app = new Main();
         app.setShowSettings(false);
@@ -103,7 +104,7 @@ public class Main extends SimpleApplication {
         chaseCam.setDefaultVerticalRotation(0);
         chaseCam.setDefaultDistance(8);
         chaseCam.setRotationSensitivity(10f);
-        chaseCam.setMinDistance(8);
+        chaseCam.setMinDistance(10);
         chaseCam.setMaxDistance(20);
         chaseCam.setInvertVerticalAxis(true);
         
@@ -120,16 +121,10 @@ public class Main extends SimpleApplication {
     
     @Override
     public void simpleUpdate(float tpf) {
-        if (isDragging){
-            Vector2f curPosition = inputManager.getCursorPosition();
-            Vector2f movement = curPosition.subtract(mouseCoords);
-            rootNode.rotate(-movement.y * 0.01f, movement.x * 0.01f, 0);
-            mouseCoords = inputManager.getCursorPosition().clone();
-            }
-        
+   
         bloom.setBloomIntensity(bloomIntensity);
         hudBloomIntensity.setText("Bloom - natezenie: "+bloomIntensity);
-        bloomIntensity+=0.001f;
+        bloomIntensity+=0.07f;
         if(bloomIntensity>=10)
             bloomIntensity=0;
 
@@ -213,13 +208,16 @@ public class Main extends SimpleApplication {
         
         
         //Dodawanie czesci mozgu
-
+        /*
         addNewBrainPart("Models/brain_left.j3o", "Textures/brain_left.png");
         addNewBrainPart("Models/brain_right.j3o", "Textures/brain_right.png");
         addNewBrainPart("Models/back_left.j3o", "Textures/back_left.png");
         addNewBrainPart("Models/back_right.j3o", "Textures/back_right.png");
         addNewBrainPart("Models/center.j3o", "Textures/center.png");
-
+        */
+        
+        addNewBrainPart("Models/left_half.obj", "Textures/lh_pial.png");
+        addNewBrainPart("Models/right_half.obj", "Textures/rh_pial.png");
         
         //Podczepienie zaczepu do rootNode
         rootNode.attachChild(pivot); 
