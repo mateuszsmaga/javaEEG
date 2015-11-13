@@ -1,4 +1,4 @@
-package javaEEG;
+﻿package javaEEG;
 
 import com.jme3.collision.CollisionResults;
 import com.jme3.texture.Texture;
@@ -40,7 +40,7 @@ public class Main extends SimpleApplication {
     ChaseCamera chaseCam;
 
     //zabawy
-    float bloomIntensity = 1.0f;
+    float bloomIntensity = 2.0f;
     BloomFilter bloom;
     BitmapText hudBloomIntensity;
             
