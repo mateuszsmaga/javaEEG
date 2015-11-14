@@ -24,23 +24,19 @@ import com.jme3.math.Vector3f;
 import com.jme3.scene.Node;
 import com.jme3.system.AppSettings;
 
-public class Main extends SimpleApplication {
+public class BrainView extends SimpleApplication {
     
     private static final Logger logger =
-            Logger.getLogger(Main.class.getName());
+            Logger.getLogger(BrainView.class.getName());
     
     //Boolean sprawdzający, czy przeciągamy kursor myszy
-    public boolean isDragging = false;
-    //Koordynaty myszy
-    Vector2f mouseCoords = Vector2f.ZERO;
-    //Poprzednie koordynaty myszy
-    Vector2f oldCoords = Vector2f.ZERO;
+    private boolean isDragging = false;
     
     //ChaseCam
     ChaseCamera chaseCam;
 
     //zabawy
-    float bloomIntensity = 1.0f;
+    public float bloomIntensity = 1.0f;
     BloomFilter bloom;
     BitmapText hudBloomIntensity;
             
@@ -53,17 +49,31 @@ public class Main extends SimpleApplication {
     public HashMap<String, Material> materialMap = 
             new HashMap<String, Material>();
     
+    //kontrola czasu
+    private long totalTime;
+    private long currentTime;
+    private long oneSecond = 1000;
+    
+    //chwilowa tablica częstotliwości do wyświetlenia
+    public double[] frequencyArray = {0.7, 35, 12, 2, 85, 12.15, 0.3,
+                            3, 7, 22, 43, 11, 17, 32, 37, 31,
+                            1, 18, 21, 22, 23, 25, 11, 37, 41,
+                            24, 65, 15, 18, 41, 31, 13, 5, 17,
+                            2, 87, 3, 8, 5, 3, 4, 11, 21, 32};
+    public int arrayLength = frequencyArray.length;
+    private int arrayCounter = 0;
 
     //Stworzenie nowej aplikacji i jej ustawienia
     public static void main(String[] args) {
         //Ustawienia aplikacji
         AppSettings settings = new AppSettings(true);
+        settings.setFrameRate(10);
         settings.setResolution(1280, 720);
         settings.setTitle("EEG");
         settings.setAudioRenderer(null);
-        settings.setFrameRate(60);
+        
         //Stworzenie aplikacji i uruchomienie jej
-        Main app = new Main();
+        BrainView app = new BrainView();
         app.setShowSettings(false);
         app.setSettings(settings);
         app.start();
@@ -82,23 +92,18 @@ public class Main extends SimpleApplication {
         fpp.addFilter(bloom);
         viewPort.addProcessor(fpp);
 
+        //wyłączenie statystyk
         setDisplayStatView(false);
        
+        //Pobranie czasu startu
+        totalTime = System.currentTimeMillis();
+        
         //Tworzenie HUD
         createHUD();
         
         //Wylaczenie obslugi kamery klawiatura i mysza
         flyCam.setEnabled(false);
-        
-        //Ustawienia kamery obracającej się za mózgiem
-        Vector3f location = cam.getLocation();
-        System.out.print("x="+location.x+", y="+location.y+", z="+location.z);
-        
-        Quaternion rotation = cam.getRotation();
-        System.out.print("W="+rotation.getW()+", X="+rotation.getX()+", Y="+rotation.getY()+", Z="+rotation.getZ());
-        cam.setRotation(new Quaternion(0f, 1f, 0f, 0f));
-        cam.setLocation(new Vector3f(10f, 0f, 0f));
-        
+                
         chaseCam = new ChaseCamera(cam, rootNode, inputManager);
         chaseCam.setDefaultHorizontalRotation(FastMath.PI/2);
         chaseCam.setDefaultVerticalRotation(0);
@@ -121,23 +126,42 @@ public class Main extends SimpleApplication {
     
     @Override
     public void simpleUpdate(float tpf) {
-   
-        bloom.setBloomIntensity(bloomIntensity);
-        hudBloomIntensity.setText("Bloom - natezenie: "+bloomIntensity);
-        bloomIntensity+=0.07f;
-        if(bloomIntensity>=10)
-            bloomIntensity=0;
-
+        
+        //Zmiana materiału co sekundę.
+        currentTime = System.currentTimeMillis();
+        if(currentTime - totalTime >= oneSecond){
+            //tutaj zmiana materiali
+            changeMaterial(frequencyArray[arrayCounter]);
+            arrayCounter++;
+            if(arrayCounter==arrayLength){
+                arrayCounter=0;
+            }
+            totalTime=currentTime;
+        }
+        
+        
     }
+    
+    
+    public void changeMaterial(double frequency){
+        if(frequency>=0.5 && frequency<=3){
+            
+        }else if(frequency>=8 && frequency<=13){
+            
+        }else if(frequency>=12 && frequency<=28){
+            
+        }else if(frequency>=4 && frequency<=7){
+            
+        }else if(frequency>=40){
+            
+        }
+    }
+    
+
 
     private ActionListener actionListener = new ActionListener() {
         public void onAction(String binding, boolean keyPressed, float tpf) {
 
-            if (binding.equals("Drag")){
-                isDragging = keyPressed;
-                //Zresetuj pozycję myszy w porzednim przeciągnieciu
-                mouseCoords = new Vector2f(inputManager.getCursorPosition());
-            }
             
             if (binding.equals("Space") && keyPressed) {
                 chaseCam.setDefaultHorizontalRotation(FastMath.PI/2);
@@ -201,6 +225,11 @@ public class Main extends SimpleApplication {
         inputManager.addListener(actionListener, "Space");
     }
     
+     public void setBloom(int bloomValue){
+        if(bloomValue>0)
+            bloom.setBloomIntensity(bloomValue);
+    }
+     
     //Dodanie wszystkich elementow mozgu
     public void addAllParts(){
         //Stworzenie nowego zaczepu

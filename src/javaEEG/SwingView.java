@@ -19,15 +19,18 @@ import java.util.logging.Logger;
 import static javaEEG.Widok.CreateSelectFile;
 import static javaEEG.Widok.ReadFile;
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-public class TestCanvas {
+public class SwingView{
 
     private static JmeCanvasContext context;
     private static Canvas canvas;
     private static Application app;
     private static JFrame frame;
-    private static final String appClass = "javaEEG.Main";
+    private static JSlider bloomSlider, numberSlider;
+    private static final String appClass = "javaEEG.BrainView";
 
     
     private static void createMenu(){
@@ -45,17 +48,6 @@ public class TestCanvas {
             }
         });
      
-        
-        JMenuItem itemSmallSize = new JMenuItem("Zminimalizuj (0, 0)");
-        optionsMenu.add(itemSmallSize);
-        itemSmallSize.addActionListener(new ActionListener(){
-            public void actionPerformed(ActionEvent e){
-                Dimension preferred = frame.getPreferredSize();
-                frame.setPreferredSize(new Dimension(0, 0));
-                frame.pack();
-                frame.setPreferredSize(preferred);
-            }
-        });
         
 
         JMenuItem itemExit = new JMenuItem("Wyjdź");
@@ -77,9 +69,45 @@ public class TestCanvas {
                 app.stop();
             }
         });
-
-        createMenu();
+        
+       createSliders();
+       createMenu();
     }
+    
+    public static void createSliders(){
+        
+        numberSlider = new JSlider(JSlider.HORIZONTAL, 0, 10, 0);
+        //Turn on labels at major tick marks.
+        numberSlider.setMajorTickSpacing(1);
+        numberSlider.setMinorTickSpacing(1);
+        numberSlider.setPaintTicks(true);
+        numberSlider.setPaintLabels(true);
+        numberSlider.setBorder(BorderFactory.createTitledBorder("Linia czasu."));
+        frame.add(numberSlider, BorderLayout.SOUTH);
+        
+        numberSlider.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+            }
+        });
+        
+        
+        bloomSlider = new JSlider(JSlider.VERTICAL, 0, 10, 0);
+        // numberSlider.addChangeListener(this);
+        bloomSlider.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+            }
+        });
+        //Turn on labels at major tick marks.
+        bloomSlider.setMajorTickSpacing(1);
+        bloomSlider.setMinorTickSpacing(1);
+        bloomSlider.setPaintTicks(true);
+        bloomSlider.setPaintLabels(true);
+        bloomSlider.setBorder(BorderFactory.createTitledBorder("Ustawienie bloom."));
+        frame.add(bloomSlider, BorderLayout.EAST);
+        
+    }
+    
+   
     
     public static void CreateSelectFile(JFrame frame)
     {   String userDir = System.getProperty("user.home");
