@@ -1,4 +1,4 @@
-﻿package javaEEG;
+package javaEEG;
 
 import com.jme3.collision.CollisionResults;
 import com.jme3.texture.Texture;
@@ -36,13 +36,12 @@ public class BrainView extends SimpleApplication {
     ChaseCamera chaseCam;
 
     //zabawy
-<<<<<<< HEAD:src/javaEEG/BrainView.java
-    public float bloomIntensity = 1.0f;
-=======
-    float bloomIntensity = 2.0f;
->>>>>>> origin/master:src/javaEEG/Main.java
+    public float bloomIntensity = 2.0f;
     BloomFilter bloom;
     BitmapText hudBloomIntensity;
+    
+    //testy poprawnosci wyswietlania czestotliwosci
+    BitmapText hudFrequency;
             
     //Zerowa pozycja
     Quaternion rootNodeLocation;
@@ -53,10 +52,17 @@ public class BrainView extends SimpleApplication {
     public HashMap<String, Material> materialMap = 
             new HashMap<String, Material>();
     
+    //Mapa objektów
+    public HashMap<String, Spatial> objectMap =
+            new HashMap<String, Spatial>();
+    
     //kontrola czasu
     private long totalTime;
     private long currentTime;
     private long oneSecond = 1000;
+    
+    //stop/start
+    boolean stopStart = true;
     
     //chwilowa tablica częstotliwości do wyświetlenia
     public double[] frequencyArray = {0.7, 35, 12, 2, 85, 12.15, 0.3,
@@ -105,6 +111,22 @@ public class BrainView extends SimpleApplication {
         //Tworzenie HUD
         createHUD();
         
+        //testy poprawnosci podwietlania obszarow
+        hudFrequency = new BitmapText(guiFont, false);          
+        //Rozmiar tekstu
+        hudFrequency.setSize(guiFont.getCharSet().getRenderedSize());      // font size
+        //kolor czcionki
+        hudFrequency.setColor(ColorRGBA.White);   
+        //Treść tekstu
+        hudFrequency.setText(" ");
+        //Pozycja tekstu
+        hudFrequency.setLocalTranslation(
+                0.2f,
+                settings.getHeight()-settings.getHeight()*0.19f, 
+                0);
+        guiNode.attachChild(hudFrequency);
+
+        
         //Wylaczenie obslugi kamery klawiatura i mysza
         flyCam.setEnabled(false);
                 
@@ -129,19 +151,21 @@ public class BrainView extends SimpleApplication {
     }
     
     @Override
-    public void simpleUpdate(float tpf) {
-        
-        //Zmiana materiału co sekundę.
-        currentTime = System.currentTimeMillis();
-        if(currentTime - totalTime >= oneSecond){
-            //tutaj zmiana materiali
-            changeMaterial(frequencyArray[arrayCounter]);
-            arrayCounter++;
-            if(arrayCounter==arrayLength){
-                arrayCounter=0;
+    public void simpleUpdate(float tpf) {   
+        if(stopStart){
+            //Zmiana materiału co sekundę.
+            currentTime = System.currentTimeMillis();
+            if(currentTime - totalTime >= oneSecond){
+                //tutaj zmiana materiali
+                changeMaterial(frequencyArray[arrayCounter]);
+                arrayCounter++;
+                if(arrayCounter==arrayLength){
+                    arrayCounter=0;
+                }
+                totalTime=currentTime;
             }
-            totalTime=currentTime;
         }
+        
         
         
     }
@@ -149,16 +173,43 @@ public class BrainView extends SimpleApplication {
     
     public void changeMaterial(double frequency){
         if(frequency>=0.5 && frequency<=3){
-            
+            //zielony
+            addGlowMaterial("left_half-geom-0", new ColorRGBA(0.247f, 0.749f, 0.247f, 1), "Textures/glowMaps/glowMap_lh.png");
+            addGlowMaterial("right_half-geom-0", new ColorRGBA(0.247f,  0.749f, 0.247f, 1), "Textures/glowMaps/glowMap_rh.png");
         }else if(frequency>=8 && frequency<=13){
-            
+            //czerwony
+            addGlowMaterial("left_half-geom-0", new ColorRGBA(1, 0.2f, 0.2f, 1), "Textures/glowMaps/glowMap_lh.png");
+            addGlowMaterial("right_half-geom-0", new ColorRGBA(1, 0.2f, 0.2f, 1), "Textures/glowMaps/glowMap_rh.png");
         }else if(frequency>=12 && frequency<=28){
-            
+            //niebieski
+            addGlowMaterial("left_half-geom-0", new ColorRGBA(0.2f, 0.9725f, 0.9725f, 1), "Textures/glowMaps/glowMap_lh.png");
+            addGlowMaterial("right_half-geom-0", new ColorRGBA(0.2f, 0.9725f, 0.9725f, 1), "Textures/glowMaps/glowMap_rh.png");
         }else if(frequency>=4 && frequency<=7){
-            
+            //zolty
+            addGlowMaterial("left_half-geom-0", new ColorRGBA(0.9725f, 0.9725f, 0.2f, 1), "Textures/glowMaps/glowMap_lh.png");
+            addGlowMaterial("right_half-geom-0", new ColorRGBA(0.9725f, 0.9725f, 0.2f, 1), "Textures/glowMaps/glowMap_rh.png");
         }else if(frequency>=40){
-            
+            //rozowo-fioletowy
+            addGlowMaterial("left_half-geom-0", new ColorRGBA(0.792f, 0.117f, 1, 1), "Textures/glowMaps/glowMap_lh.png");
+            addGlowMaterial("right_half-geom-0", new ColorRGBA(0.792f, 0.117f, 1, 1), "Textures/glowMaps/glowMap_rh.png");
         }
+        
+        hudFrequency.setText("Wyswietlana czestotliwosc: "+frequency+"Hz.");
+    }
+    
+    
+    
+    //dodanie podświetlonego obszaru
+    public void addGlowMaterial(String objectName, ColorRGBA glowColor, String glowMapTexture){
+        
+        //Nowy materiał
+        Material selectedMaterial = materialMap.get(objectName).clone();
+        selectedMaterial.setColor("GlowColor", glowColor);
+        selectedMaterial.setTexture("GlowMap", assetManager.loadTexture(glowMapTexture));
+
+        //Zmiana materiału zaznaczonego obiektu
+        objectMap.get(objectName).setMaterial(selectedMaterial);
+   
     }
     
 
@@ -166,6 +217,12 @@ public class BrainView extends SimpleApplication {
     private ActionListener actionListener = new ActionListener() {
         public void onAction(String binding, boolean keyPressed, float tpf) {
 
+            if (binding.equals("Pause") && keyPressed) {
+                if(stopStart)
+                    stopStart=false;
+                    else
+                        stopStart=true;
+            } 
             
             if (binding.equals("Space") && keyPressed) {
                 chaseCam.setDefaultHorizontalRotation(FastMath.PI/2);
@@ -216,6 +273,8 @@ public class BrainView extends SimpleApplication {
     
     //Obsluga klawiszy
     public void addInputs(){
+        
+        /*
         //Zaznaczanie PPM
         inputManager.addMapping("RightMouseButtonClick", 
                 new MouseButtonTrigger(mouseInput.BUTTON_RIGHT));
@@ -224,15 +283,15 @@ public class BrainView extends SimpleApplication {
         inputManager.addMapping("LeftMouseButtonClick", 
                 new MouseButtonTrigger(mouseInput.BUTTON_LEFT));
         inputManager.addListener(actionListener, "LeftMouseButtonClick");
+        */
         //Resetowanie pozycji
         inputManager.addMapping("Space", new KeyTrigger(keyInput.KEY_SPACE));
         inputManager.addListener(actionListener, "Space");
+        
+        inputManager.addMapping("Pause", new KeyTrigger(keyInput.KEY_PAUSE));
+        inputManager.addListener(actionListener, "Pause");
     }
     
-     public void setBloom(int bloomValue){
-        if(bloomValue>0)
-            bloom.setBloomIntensity(bloomValue);
-    }
      
     //Dodanie wszystkich elementow mozgu
     public void addAllParts(){
@@ -264,7 +323,7 @@ public class BrainView extends SimpleApplication {
         Spatial brainPart = assetManager.loadModel(modelDirectory);
         //Stworzenie nowego materiału
         Material brainPartMaterial = new Material(assetManager,
-                "Common/MatDefs/Misc/Unshaded.j3md");
+                "Shaders/glowMapColor.j3md");
         //Załadowanie tekstury
         Texture brainPartTexture = assetManager.loadTexture(textureDirectory);
         //UStawienie tekstury materiału
@@ -272,6 +331,7 @@ public class BrainView extends SimpleApplication {
         //Ustawienie materiału obiektu
         brainPart.setMaterial(brainPartMaterial);
         //Dodanie gotowego materiału do mapy materiałów
+        objectMap.put(brainPart.getName(), brainPart);
         materialMap.put(brainPart.getName(),brainPartMaterial);
         //Podczepienie obiektu pod zaczep
         pivot.attachChild(brainPart);
@@ -301,20 +361,15 @@ public class BrainView extends SimpleApplication {
         newHUDText("PPM = swiecacy material", 0.2f, 0.04f);
         newHUDText("LPM + ruch myszy = obrot", 0.2f, 0.07f);
         newHUDText("Spacja = zresetowanie pozycji", 0.2f, 0.10f);
-        //Stworzenie nowego elementu hud
-        hudBloomIntensity = new BitmapText(guiFont, false);          
-        //Rozmiar tekstu
-        hudBloomIntensity.setSize(guiFont.getCharSet().getRenderedSize());      // font size
-        //kolor czcionki
-        hudBloomIntensity.setColor(ColorRGBA.White);   
-        //Treść tekstu
-        hudBloomIntensity.setText("Bloom - natezenie:");
-        //Pozycja tekstu
-        hudBloomIntensity.setLocalTranslation(
-                0.2f,
-                settings.getHeight()-settings.getHeight()*0.13f, 
-                0);
-        guiNode.attachChild(hudBloomIntensity);
+        newHUDText("Pause/Break = zatrzymanie symulacji", 0.2f, 0.13f);
+        
+        newHUDText("Alfa - 8-13Hz - kolor czerwony", 0.2f, 0.25f);
+        newHUDText("Beta - 12-28Hz - kolor niebieski", 0.2f, 0.28f);
+        newHUDText("Gamma - 40+Hz - kolor fioletowy/rózowy", 0.2f, 0.31f);
+        newHUDText("Delta - 0.5-3Hz - kolor zielony", 0.2f, 0.34f);
+        newHUDText("Theta - 4-7Hz - kolor żółty", 0.2f, 0.37f);
+        
+        
     }
     
     //Funkcja zwracająca  kliknięte obiekty
