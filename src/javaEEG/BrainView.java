@@ -1,4 +1,4 @@
-package javaEEG;
+﻿package javaEEG;
 
 import com.jme3.collision.CollisionResults;
 import com.jme3.texture.Texture;
@@ -36,7 +36,11 @@ public class BrainView extends SimpleApplication {
     ChaseCamera chaseCam;
 
     //zabawy
+<<<<<<< HEAD:src/javaEEG/BrainView.java
     public float bloomIntensity = 1.0f;
+=======
+    float bloomIntensity = 2.0f;
+>>>>>>> origin/master:src/javaEEG/Main.java
     BloomFilter bloom;
     BitmapText hudBloomIntensity;
             
