@@ -69,7 +69,7 @@ public class Widok {
               chanel4[i]=Double.parseDouble(ar[3]);
               i++;
             }
-           for (int j=0; j<lines; j++) System.out.println(chanel1[j]+" "+chanel2[j]+" "+chanel3[j]+" " +chanel4[j]);
+           for (int j=0; j<lines; j++) System.out.println(chanel1[j]+" "+chanel2[j]+" "+chanel3[j]+" " +chanel4[j]+" "+lines);
             in2.close();
         } 
         catch (FileNotFoundException fne) {
