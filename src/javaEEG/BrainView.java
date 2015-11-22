@@ -36,7 +36,7 @@ public class BrainView extends SimpleApplication {
     ChaseCamera chaseCam;
 
     //zabawy
-    public float bloomIntensity = 2.0f;
+    public static float bloomIntensity = 2.0f;
     BloomFilter bloom;
     BitmapText hudBloomIntensity;
     
@@ -65,14 +65,15 @@ public class BrainView extends SimpleApplication {
     boolean stopStart = true;
     
     //chwilowa tablica częstotliwości do wyświetlenia
-    public double[] frequencyArray = {0.7, 35, 12, 2, 85, 12.15, 0.3,
+    public static double[] frequencyArray = {0.7, 35, 12, 2, 85, 12.15, 0.3,
                             3, 7, 22, 43, 11, 17, 32, 37, 31,
                             1, 18, 21, 22, 23, 25, 11, 37, 41,
                             24, 65, 15, 18, 41, 31, 13, 5, 17,
                             2, 87, 3, 8, 5, 3, 4, 11, 21, 32};
-    public int arrayLength = frequencyArray.length;
+    public static int arrayLength = frequencyArray.length;
+    public static int chosenStage = 0;
     private int arrayCounter = 0;
-
+    
     //Stworzenie nowej aplikacji i jej ustawienia
     public static void main(String[] args) {
         //Ustawienia aplikacji
@@ -152,7 +153,12 @@ public class BrainView extends SimpleApplication {
     
     @Override
     public void simpleUpdate(float tpf) {   
-        if(stopStart){
+        
+        changeMaterial(frequencyArray[chosenStage]);
+        
+        bloom.setBloomIntensity(bloomIntensity);
+        
+        if(!stopStart){
             //Zmiana materiału co sekundę.
             currentTime = System.currentTimeMillis();
             if(currentTime - totalTime >= oneSecond){
