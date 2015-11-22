@@ -4,6 +4,7 @@
  * and open the template in the editor.
  */
 package javaEEG;
+import static JavaEEG.DFT.directDftSingle;
 import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.File;
@@ -11,7 +12,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import javax.swing.filechooser.FileNameExtensionFilter;
-
+import java.lang.Object;
 /**
  *
  * @author Admin
@@ -71,6 +72,7 @@ public class Widok {
             }
            for (int j=0; j<lines; j++) System.out.println(chanel1[j]+" "+chanel2[j]+" "+chanel3[j]+" " +chanel4[j]+" "+lines);
             in2.close();
+            
         } 
         catch (FileNotFoundException fne) {
                         JOptionPane.showMessageDialog(null, "Nie znaleziono pliku");                    
@@ -81,6 +83,8 @@ public class Widok {
         
     
     }
+ 
+
     public static void main(String[] args) {
         // TODO code application logic here
         

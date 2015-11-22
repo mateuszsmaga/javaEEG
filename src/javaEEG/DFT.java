@@ -11,9 +11,7 @@
 // This module is provided "as is", without warranties of any kind.
 
 package JavaEEG;
-
 import biz.source_code.dsp.math.Complex;
-
 /**
 * Discrete Fourier transform (DFT).
 *
