@@ -82,7 +82,7 @@ public class SwingView{
     
     public static void createSliders(){
         
-        numberSlider = new JSlider(JSlider.HORIZONTAL, 0, 10, 0);
+        numberSlider = new JSlider(JSlider.HORIZONTAL, 0, BrainView.arrayLength-1, 0);
         //Turn on labels at major tick marks.
         numberSlider.setMajorTickSpacing(1);
         numberSlider.setMinorTickSpacing(1);
@@ -93,6 +93,7 @@ public class SwingView{
         
         numberSlider.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
+                BrainView.chosenStage=numberSlider.getValue();
             }
         });
         
@@ -101,6 +102,7 @@ public class SwingView{
         // numberSlider.addChangeListener(this);
         bloomSlider.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
+                BrainView.bloomIntensity=bloomSlider.getValue();
             }
         });
         //Turn on labels at major tick marks.
