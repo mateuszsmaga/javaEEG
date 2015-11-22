@@ -4,107 +4,90 @@
  * and open the template in the editor.
  */
 package javaEEG;
+import static JavaEEG.DFT.directDftSingle;
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import javax.swing.filechooser.FileNameExtensionFilter;
-
+import java.lang.Object;
 /**
  *
  * @author Admin
  */
-public class Widok extends JFrame{
-    
-    JButton jeden=new JButton("Jeden");
-    JButton dwa=new JButton("Jeden");
-    JButton trzy=new JButton("Jeden");
-    JButton cztery=new JButton("Jeden");
-    JButton piec=new JButton("Jeden");
-    JButton szesc=new JButton("Jeden");
-    Widok()
-    {
-        JFrame frame = new JFrame("EEG");
-        frame.setLayout(new BorderLayout());
-        SpringLayout layout=new SpringLayout();
-        JPanel panel= new JPanel(layout);
-        setFullScreen(frame, true); //Pełny ekran
-        JPanel panelButtons = new JPanel(new FlowLayout());
-        panelButtons.setBackground(new Color(32,113,154));
-        panel.setBackground(new Color(32,113,154));
-        frame.add(panel,BorderLayout.CENTER);
-        
-       frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        
-        CreateSelectFile(frame);    // wywołanie FileChooser
-        JSlider slider = new JSlider(); slider.setPreferredSize(new Dimension (660,20));
-        JTextArea mozg = new JTextArea("\n \n \n \n \n MOZG");  mozg.setColumns(70); mozg.setRows(40);
-        JTextArea graf = new JTextArea("\n \n \n \n \n GRAF");  graf.setColumns(60); graf.setRows(35);
-        panel.add(mozg); panel.add(graf); panel.add(slider); panelButtons.setPreferredSize(new Dimension(660, 30));
-       panel.add(panelButtons);
-            layout.putConstraint(SpringLayout.WEST, mozg, 40, SpringLayout.NORTH, panel);
-            layout.putConstraint(SpringLayout.NORTH, mozg, 50, SpringLayout.WEST, panel);
-            layout.putConstraint(SpringLayout.WEST, graf, 40, SpringLayout.EAST, mozg);
-            layout.putConstraint(SpringLayout.NORTH, graf, 50, SpringLayout.WEST, panel);
-            layout.putConstraint(SpringLayout.WEST, slider, 40, SpringLayout.EAST, mozg);
-            layout.putConstraint(SpringLayout.NORTH, slider, 15, SpringLayout.SOUTH, graf);
-            layout.putConstraint(SpringLayout.WEST, panelButtons, 40, SpringLayout.EAST, mozg);
-            layout.putConstraint(SpringLayout.NORTH, panelButtons, 15, SpringLayout.SOUTH, slider);
-          panelButtons.add(jeden);panelButtons.add(dwa);panelButtons.add(trzy);panelButtons.add(cztery);panelButtons.add(piec);panelButtons.add(szesc);
-            
-        frame.setVisible(true);
-        frame.setResizable(true);
-    }
- 
+public class Widok {
+
+    //Jfile chooser
     public static void CreateSelectFile(JFrame frame)
     {   String userDir = System.getProperty("user.home");
-        JFileChooser fc = new JFileChooser(userDir+"/Desktop");
+        JFileChooser fc = new JFileChooser(userDir+"/Desktop");                      //ustawienie katalogu startowego
         
        
         fc.setFileFilter(new FileNameExtensionFilter("Pliki tekstowe", "txt"));     // tylko rozszerzenie txt
-        int returnVal = fc.showOpenDialog(frame);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            ReadFile(fc);
-           // log.append("Opening: " + file.getName() + "." + newline);
-        } 
-        else if(returnVal == JFileChooser.CANCEL_OPTION)
-        {
-            System.exit(0);
-        }
+        int returnVal = fc.showOpenDialog(frame);                                   //okno
+        if (returnVal == JFileChooser.APPROVE_OPTION) { ReadFile(fc); }             //naciśnięcie "Wczytaj"
+        else if(returnVal == JFileChooser.CANCEL_OPTION) { }                        // naciśnięcie "Anuluj"
     }
     
-    public static void setFullScreen(JFrame frame, boolean fullScreen) {
-  frame.dispose();
-  frame.setResizable(!fullScreen);
-  if (fullScreen) {
-    frame.setLocation(0, 0);
-    frame.setSize(java.awt.Toolkit.getDefaultToolkit().getScreenSize());
-  }
-  frame.setVisible(true);
-  frame.repaint();
-}
- 
-    public static void ReadFile(JFileChooser fc)
+
+    public static void ReadFile(JFileChooser fc)                                    //czytanie pliku
     {
         
         File plik = fc.getSelectedFile();
-        String nazwaPlik=plik.getName();
-        String path = plik.getAbsolutePath();
-        JOptionPane.showMessageDialog(null, "Wybrany Plik to: "+ nazwaPlik +" Scieżka: "+ path);
-       // final File currentDir = new File(katalog);
-       // System.out.println("Wybrano plik: " + plik);
-       // System.out.println("w katalogu: "+ katalog);
-       // System.out.println("Ścieżka: "+ katalog + plik);
+        String nazwaPlik=plik.getName();                                            //nazwa pliku
+        String path = plik.getAbsolutePath();                                       //ścieżka do pliku
+        JOptionPane.showMessageDialog(null, "Wybrany Plik to: "+ nazwaPlik +" Scieżka: "+ path);    //okno z informacją
+   
+        
+        try {
+            BufferedReader in = new BufferedReader(new FileReader(path));           
+            String str;
+            String str2;
+            str = in.readLine();
+            str = in.readLine();
+            int lines=0;
+            int i=0;
+            
+            while ((str=in.readLine()) != null){ lines++;} in.close();              // zliczanie ilości linii w pliku
+            double[] chanel1 = new double[lines];
+            double[] chanel2 = new double[lines];                                   //deklaracja tablic dla poszególnych kanałów 
+            double[] chanel3 = new double[lines];
+            double[] chanel4 = new double[lines];
+            
+            BufferedReader in2 = new BufferedReader(new FileReader(path));
+            str2 = in2.readLine();
+            str2 = in2.readLine();
+            
+            
+            while ((str2 = in2.readLine()) != null) {                                   
+                String[] ar=str2.split(",");                                          //rozdzielenie liczb po przecinku
+                
+              chanel1[i]=Double.parseDouble(ar[0]);                                     //wpisanie wartości do talbic
+              chanel2[i]=Double.parseDouble(ar[1]);
+              chanel3[i]=Double.parseDouble(ar[2]);
+              chanel4[i]=Double.parseDouble(ar[3]);
+              i++;
+            }
+           for (int j=0; j<lines; j++) System.out.println(chanel1[j]+" "+chanel2[j]+" "+chanel3[j]+" " +chanel4[j]+" "+lines);
+            in2.close();
+            
+        } 
+        catch (FileNotFoundException fne) {
+                        JOptionPane.showMessageDialog(null, "Nie znaleziono pliku");                    
+            }
+        catch (IOException e) {
+           JOptionPane.showMessageDialog(null, "Błąd odczytu danych");
+        }
+        
+    
     }
+ 
+
     public static void main(String[] args) {
         // TODO code application logic here
-        EventQueue.invokeLater(new Runnable(){
-            @Override
-            public void run()
-            {
-                new Widok();
-            }
-        });
+        
         
     }
     

@@ -77,8 +77,8 @@ public class BrainView extends SimpleApplication {
     public static void main(String[] args) {
         //Ustawienia aplikacji
         AppSettings settings = new AppSettings(true);
-        settings.setFrameRate(10);
-        settings.setResolution(1280, 720);
+        settings.setFrameRate(60);
+        settings.setResolution(1200, 320);
         settings.setTitle("EEG");
         settings.setAudioRenderer(null);
         

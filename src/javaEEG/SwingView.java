@@ -12,9 +12,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.FileNotFoundException;
 import java.util.concurrent.Callable;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import static javaEEG.Widok.CreateSelectFile;
 import static javaEEG.Widok.ReadFile;
@@ -44,7 +46,11 @@ public class SwingView{
         optionsMenu.add(itemReadFile);
         itemReadFile.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                CreateSelectFile(frame);    // wywołanie FileChooser
+                try {
+                    CreateSelectFile(frame);    // wywołanie FileChooser
+                } catch (FileNotFoundException ex) {
+                    Logger.getLogger(SwingView.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         });
      
@@ -109,7 +115,7 @@ public class SwingView{
     
    
     
-    public static void CreateSelectFile(JFrame frame)
+    public static void CreateSelectFile(JFrame frame) throws FileNotFoundException
     {   String userDir = System.getProperty("user.home");
         JFileChooser fc = new JFileChooser(userDir+"/Desktop");
         
@@ -122,14 +128,14 @@ public class SwingView{
         } 
         else if(returnVal == JFileChooser.CANCEL_OPTION)
         {
-            System.exit(0);
+           
         }
     }
     
     public static void createCanvas(String appClass){
         AppSettings settings = new AppSettings(true);
-        settings.setWidth(1280);
-        settings.setHeight(720);
+        settings.setWidth(800);
+        settings.setHeight(600);
 
         try{
             Class<? extends Application> clazz = (Class<? extends Application>) Class.forName(appClass);
