@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 package javaEEG;
-import static JavaEEG.DFT.directDftSingle;
+import JavaEEG.DFT;
 import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.File;
@@ -12,13 +12,19 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.lang.Object;
+import biz.source_code.dsp.math.Complex;
 /**
  *
  * @author Admin
  */
 public class Widok {
 
+  public static  double[] chanel1;
+  public static  double[] chanel2;
+  public static  double[] chanel3;
+  public static  double[] chanel4;
+                  
+    
     //Jfile chooser
     public static void CreateSelectFile(JFrame frame)
     {   String userDir = System.getProperty("user.home");
@@ -51,10 +57,10 @@ public class Widok {
             int i=0;
             
             while ((str=in.readLine()) != null){ lines++;} in.close();              // zliczanie ilości linii w pliku
-            double[] chanel1 = new double[lines];
-            double[] chanel2 = new double[lines];                                   //deklaracja tablic dla poszególnych kanałów 
-            double[] chanel3 = new double[lines];
-            double[] chanel4 = new double[lines];
+            chanel1= new double[lines];
+            chanel2 = new double[lines];                                   //deklaracja tablic dla poszególnych kanałów 
+            chanel3 = new double[lines];
+            chanel4 = new double[lines];
             
             BufferedReader in2 = new BufferedReader(new FileReader(path));
             str2 = in2.readLine();
@@ -70,9 +76,9 @@ public class Widok {
               chanel4[i]=Double.parseDouble(ar[3]);
               i++;
             }
-           for (int j=0; j<lines; j++) System.out.println(chanel1[j]+" "+chanel2[j]+" "+chanel3[j]+" " +chanel4[j]+" "+lines);
+          // for (int j=0; j<lines; j++) System.out.println(chanel1[j]+" "+chanel2[j]+" "+chanel3[j]+" " +chanel4[j]+" "+lines);
             in2.close();
-            
+
         } 
         catch (FileNotFoundException fne) {
                         JOptionPane.showMessageDialog(null, "Nie znaleziono pliku");                    
@@ -81,9 +87,13 @@ public class Widok {
            JOptionPane.showMessageDialog(null, "Błąd odczytu danych");
         }
         
+        
+        Complex[] r=DFT.directDft(chanel1);
+          for (int j=0; j<chanel1.length;j++) System.out.println(r[j]+"      " +j);
+        
+        
     
     }
- 
 
     public static void main(String[] args) {
         // TODO code application logic here

@@ -12,6 +12,7 @@
 
 package JavaEEG;
 import biz.source_code.dsp.math.Complex;
+
 /**
 * Discrete Fourier transform (DFT).
 *
@@ -47,7 +48,8 @@ public class DFT {
 * @return
 *    A complex number that corresponds to the amplitude and phase of a sinusoidal frequency component.
 */
-public static Complex directDftSingle (double[] x, int pos, int len, int relativeFrequency, boolean normalize) {
+public static Complex directDftSingle (double[] x, int pos, int len, int relativeFrequency, boolean normalize) 
+{
    Complex acc = Complex.ZERO;
    double w = -2 * Math.PI / len * relativeFrequency;
    for (int p = 0; p < len; p++) {
@@ -58,7 +60,8 @@ public static Complex directDftSingle (double[] x, int pos, int len, int relativ
          // For the frequencies between 0 and len/2 we have to duplicate the
          // magnitudes, when we use only one of the two complex conjugate values.
       acc = acc.div(half ? len / 2.0 : len); }
-   return acc; }
+   return acc; 
+}
 
 /**
 * Computes the DFT on real numbers for a single frequency.
@@ -116,7 +119,9 @@ public static Complex goertzelSingle (double[] x, int pos, int len, int relative
 public static Complex[] directDft (double[] x) {
    Complex[] r = new Complex[x.length];
    for (int frequency = 0; frequency < x.length; frequency++) {
-      r[frequency] = directDftSingle(x, 0, x.length, frequency, false); }
+      r[frequency] = directDftSingle(x, 0, x.length, frequency, false); 
+       //System.out.println(r[frequency].toString());
+   }
    return r; }
 
 /**

@@ -3,13 +3,12 @@
  * and open the template in the editor.
  */
 package javaEEG;
-
 /**
  *
  * @author Admin
  */
 
-/******************************************************************************
+/***************************************************************************
  *  Compilation:  javac FFT.java
  *  Execution:    java FFT N
  *  Dependencies: Complex.java
@@ -189,7 +188,7 @@ public class FFT {
     *
     ***************************************************************************/
 
-    public static void main(String[] args) { 
+ /*   public static void main(String[] args) { 
         int N = Integer.parseInt(args[0]);
         Complex[] x = new Complex[N];
 
@@ -215,6 +214,6 @@ public class FFT {
         // linear convolution of x with itself
         Complex[] d = convolve(x, x);
         show(d, "d = convolve(x, x)");
-    }
+    } */
 
 }
