@@ -24,6 +24,10 @@ import com.jme3.math.Vector3f;
 import com.jme3.scene.Node;
 import com.jme3.system.AppSettings;
 
+/**
+ *
+ * @author PC
+ */
 public class BrainView extends SimpleApplication {
     
     private static final Logger logger =
@@ -33,28 +37,37 @@ public class BrainView extends SimpleApplication {
     private boolean isDragging = false;
     
     //ChaseCam
-    ChaseCamera chaseCam;
+    private ChaseCamera chaseCam;
 
     //zabawy
-    public static float bloomIntensity = 2.0f;
-    BloomFilter bloom;
-    BitmapText hudBloomIntensity;
+    private static float bloomIntensity = 2.0f;
+    private BloomFilter bloom;
+    private BitmapText hudBloomIntensity;
     
     //testy poprawnosci wyswietlania czestotliwosci
-    BitmapText hudFrequency;
+    private BitmapText hudFrequency;
             
     //Zerowa pozycja
-    Quaternion rootNodeLocation;
+    private Quaternion rootNodeLocation;
     //Zaczep na czesci mozgu
-    public Node pivot;
+    private Node pivot;
 
     //Mapa materiałów
-    public HashMap<String, Material> materialMap = 
+    private HashMap<String, Material> materialMap = 
             new HashMap<String, Material>();
     
     //Mapa objektów
-    public HashMap<String, Spatial> objectMap =
+    private HashMap<String, Spatial> objectMap =
             new HashMap<String, Spatial>();
+    
+    //Mapa kolorow
+    private HashMap<String, ColorRGBA> colorMap = 
+            new HashMap<String, ColorRGBA>();
+    
+    //Mapa tekstur
+    private HashMap<String, String> glowTextureMap=
+            new HashMap<String, String>();
+    
     
     //kontrola czasu
     private long totalTime;
@@ -62,24 +75,33 @@ public class BrainView extends SimpleApplication {
     private long oneSecond = 1000;
     
     //stop/start
-    boolean stopStart = true;
+    private boolean stopStart = true;
     
-    //chwilowa tablica częstotliwości do wyświetlenia
-    public static double[] frequencyArray = {0.7, 35, 12, 2, 85, 12.15, 0.3,
-                            3, 7, 22, 43, 11, 17, 32, 37, 31,
-                            1, 18, 21, 22, 23, 25, 11, 37, 41,
-                            24, 65, 15, 18, 41, 31, 13, 5, 17,
-                            2, 87, 3, 8, 5, 3, 4, 11, 21, 32};
-    public static int arrayLength = frequencyArray.length;
-    public static int chosenStage = 0;
-    private int arrayCounter = 0;
+    //Czy trzeba cos zmienic?
+    private static boolean bloomChange=true;
+    private static boolean stageChange=true;
+    
+    
+    //wybrane miejsce na linii czasu
+    private static int chosenStage = 0;
+
+    
+    public static void setBloomIntensity(float bloom){
+        bloomIntensity=bloom;
+        bloomChange=true;
+    }
+    
+    public static void setChosenStage(int stage){
+       chosenStage=stage;
+       stageChange=true;
+    }
     
     //Stworzenie nowej aplikacji i jej ustawienia
     public static void main(String[] args) {
         //Ustawienia aplikacji
         AppSettings settings = new AppSettings(true);
         settings.setFrameRate(60);
-        settings.setResolution(1200, 320);
+        settings.setResolution(1280, 720);
         settings.setTitle("EEG");
         settings.setAudioRenderer(null);
         
@@ -90,10 +112,7 @@ public class BrainView extends SimpleApplication {
         app.start();
         
     }
-    
-    
-    
-    
+       
     @Override
     public void simpleInitApp() {
         //UStawienie shaderów
@@ -111,34 +130,16 @@ public class BrainView extends SimpleApplication {
         
         //Tworzenie HUD
         createHUD();
+        createFrequencyMessage();
         
-        //testy poprawnosci podwietlania obszarow
-        hudFrequency = new BitmapText(guiFont, false);          
-        //Rozmiar tekstu
-        hudFrequency.setSize(guiFont.getCharSet().getRenderedSize());      // font size
-        //kolor czcionki
-        hudFrequency.setColor(ColorRGBA.White);   
-        //Treść tekstu
-        hudFrequency.setText(" ");
-        //Pozycja tekstu
-        hudFrequency.setLocalTranslation(
-                0.2f,
-                settings.getHeight()-settings.getHeight()*0.19f, 
-                0);
-        guiNode.attachChild(hudFrequency);
+        //Stworzenie i skonfigurowanie kamery
+        createChaseCam();
 
+        //Utworzenie mapy kolorwo potrzebnej do podswietlania obszarow
+        fillColorMap();
         
-        //Wylaczenie obslugi kamery klawiatura i mysza
-        flyCam.setEnabled(false);
-                
-        chaseCam = new ChaseCamera(cam, rootNode, inputManager);
-        chaseCam.setDefaultHorizontalRotation(FastMath.PI/2);
-        chaseCam.setDefaultVerticalRotation(0);
-        chaseCam.setDefaultDistance(8);
-        chaseCam.setRotationSensitivity(10f);
-        chaseCam.setMinDistance(10);
-        chaseCam.setMaxDistance(20);
-        chaseCam.setInvertVerticalAxis(true);
+        //Utworzenie mapy kolorwo potrzebnej do podswietlania obszarow
+        fillGlowTetureMap();
         
         //Ustawienie koloru tla
         viewPort.setBackgroundColor(ColorRGBA.Black);
@@ -151,14 +152,54 @@ public class BrainView extends SimpleApplication {
      
     }
     
+    private void createChaseCam(){
+        //Wylaczenie obslugi kamery klawiatura i mysza
+        flyCam.setEnabled(false);
+                
+        chaseCam = new ChaseCamera(cam, rootNode, inputManager);
+        chaseCam.setDefaultHorizontalRotation(FastMath.PI/2);
+        chaseCam.setDefaultVerticalRotation(0);
+        chaseCam.setDefaultDistance(8);
+        chaseCam.setRotationSensitivity(10f);
+        chaseCam.setMinDistance(10);
+        chaseCam.setMaxDistance(20);
+        chaseCam.setInvertVerticalAxis(true);
+    }
+    
+    private void createFrequencyMessage(){
+        //testy poprawnosci podwietlania obszarow
+        hudFrequency = new BitmapText(guiFont, false);          
+        //Rozmiar tekstu
+        hudFrequency.setSize(guiFont.getCharSet().getRenderedSize());      // font size
+        //kolor czcionki
+        hudFrequency.setColor(ColorRGBA.White);   
+        //Treść tekstu
+        hudFrequency.setText(" ");
+        //Pozycja tekstu
+        hudFrequency.setLocalTranslation(
+                0.2f,
+                settings.getHeight()-settings.getHeight()*0.01f, 
+                0);
+        guiNode.attachChild(hudFrequency);
+    }
+    
     @Override
-    public void simpleUpdate(float tpf) {   
+    public void simpleUpdate(float tpf) {
         
-        changeMaterial(frequencyArray[chosenStage]);
         
-        bloom.setBloomIntensity(bloomIntensity);
+        if(stageChange){
+            changeMaterial(GlowManager.getColor(chosenStage));
+            stageChange=false;
+        }
         
-        if(!stopStart){
+        if(bloomChange){
+            bloom.setBloomIntensity(bloomIntensity);
+            bloomChange=false;
+        }
+        
+        
+        /*
+        if(stopStart){
             //Zmiana materiału co sekundę.
             currentTime = System.currentTimeMillis();
             if(currentTime - totalTime >= oneSecond){
@@ -171,42 +212,42 @@ public class BrainView extends SimpleApplication {
                 totalTime=currentTime;
             }
         }
-        
+        */
         
         
     }
     
+    private void fillColorMap(){
+        colorMap.put("green", new ColorRGBA(0.247f, 0.749f, 0.247f, 1));
+        colorMap.put("red", new ColorRGBA(1, 0.2f, 0.2f, 1));
+        colorMap.put("blue", new ColorRGBA(0.2f, 0.9725f, 0.9725f, 1));
+        colorMap.put("yellow", new ColorRGBA(0.9725f, 0.9725f, 0.2f, 1));
+        colorMap.put("purple", new ColorRGBA(0.792f, 0.117f, 1, 1));
+    }
     
-    public void changeMaterial(double frequency){
-        if(frequency>=0.5 && frequency<=3){
-            //zielony
-            addGlowMaterial("left_half-geom-0", new ColorRGBA(0.247f, 0.749f, 0.247f, 1), "Textures/glowMaps/glowMap_lh.png");
-            addGlowMaterial("right_half-geom-0", new ColorRGBA(0.247f,  0.749f, 0.247f, 1), "Textures/glowMaps/glowMap_rh.png");
-        }else if(frequency>=8 && frequency<=13){
-            //czerwony
-            addGlowMaterial("left_half-geom-0", new ColorRGBA(1, 0.2f, 0.2f, 1), "Textures/glowMaps/glowMap_lh.png");
-            addGlowMaterial("right_half-geom-0", new ColorRGBA(1, 0.2f, 0.2f, 1), "Textures/glowMaps/glowMap_rh.png");
-        }else if(frequency>=12 && frequency<=28){
-            //niebieski
-            addGlowMaterial("left_half-geom-0", new ColorRGBA(0.2f, 0.9725f, 0.9725f, 1), "Textures/glowMaps/glowMap_lh.png");
-            addGlowMaterial("right_half-geom-0", new ColorRGBA(0.2f, 0.9725f, 0.9725f, 1), "Textures/glowMaps/glowMap_rh.png");
-        }else if(frequency>=4 && frequency<=7){
-            //zolty
-            addGlowMaterial("left_half-geom-0", new ColorRGBA(0.9725f, 0.9725f, 0.2f, 1), "Textures/glowMaps/glowMap_lh.png");
-            addGlowMaterial("right_half-geom-0", new ColorRGBA(0.9725f, 0.9725f, 0.2f, 1), "Textures/glowMaps/glowMap_rh.png");
-        }else if(frequency>=40){
-            //rozowo-fioletowy
-            addGlowMaterial("left_half-geom-0", new ColorRGBA(0.792f, 0.117f, 1, 1), "Textures/glowMaps/glowMap_lh.png");
-            addGlowMaterial("right_half-geom-0", new ColorRGBA(0.792f, 0.117f, 1, 1), "Textures/glowMaps/glowMap_rh.png");
-        }
+    private void fillGlowTetureMap() {
+        glowTextureMap.put("left_half", "Textures/glowMaps/glowMap_lh.png");
+        glowTextureMap.put("right_half", "Textures/glowMaps/glowMap_rh.png");
+    }
+    
+    
+    
+    
+    public void changeMaterial(String glowColor){
         
-        hudFrequency.setText("Wyswietlana czestotliwosc: "+frequency+"Hz.");
+        if(glowColor.equals("noColor")){
+            
+        }else{
+            addGlowMaterial("left_half", colorMap.get(glowColor), glowTextureMap.get("left_half"));
+            addGlowMaterial("right_half", colorMap.get(glowColor), glowTextureMap.get("right_half"));
+        }
+        hudFrequency.setText("Wyswietlana czestotliwosc: "+GlowManager.getFrequency(chosenStage)+"Hz.");
     }
     
     
     
     //dodanie podświetlonego obszaru
-    public void addGlowMaterial(String objectName, ColorRGBA glowColor, String glowMapTexture){
+    private void addGlowMaterial(String objectName, ColorRGBA glowColor, String glowMapTexture){
         
         //Nowy materiał
         Material selectedMaterial = materialMap.get(objectName).clone();
@@ -223,13 +264,14 @@ public class BrainView extends SimpleApplication {
     private ActionListener actionListener = new ActionListener() {
         public void onAction(String binding, boolean keyPressed, float tpf) {
 
+            /*
             if (binding.equals("Pause") && keyPressed) {
                 if(stopStart)
                     stopStart=false;
                     else
                         stopStart=true;
             } 
-            
+            */
             if (binding.equals("Space") && keyPressed) {
                 chaseCam.setDefaultHorizontalRotation(FastMath.PI/2);
                 chaseCam.setDefaultVerticalRotation(0);
@@ -304,27 +346,17 @@ public class BrainView extends SimpleApplication {
         //Stworzenie nowego zaczepu
         pivot = new Node("pivot");
         
-        
         //Dodawanie czesci mozgu
-        /*
-        addNewBrainPart("Models/old_brain/brain_left.j3o", "Textures/brain_left.png");
-        addNewBrainPart("Models/old_brain/brain_right.j3o", "Textures/brain_right.png");
-        addNewBrainPart("Models/old_brain/back_left.j3o", "Textures/back_left.png");
-        addNewBrainPart("Models/old_brain/back_right.j3o", "Textures/back_right.png");
-        addNewBrainPart("Models/old_brain/center.j3o", "Textures/center.png");
-        */
-        
-        addNewBrainPart("Models/new_brain/left_half.j3o", "Textures/lh_pial.png");
-        addNewBrainPart("Models/new_brain/right_half.j3o", "Textures/rh_pial.png");
+        addNewBrainPart("left_half", "Models/new_brain/left_half.j3o", "Textures/lh_pial.png");
+        addNewBrainPart("right_half", "Models/new_brain/right_half.j3o", "Textures/rh_pial.png");
         
         //Podczepienie zaczepu do rootNode
         rootNode.attachChild(pivot); 
         rootNodeLocation = rootNode.getLocalRotation().clone();
-        
     }
     
     //Ustawienie materialu dla poszczegolnych czesci mozgu
-    public void addNewBrainPart(String modelDirectory, String textureDirectory){
+    public void addNewBrainPart(String brainPartName, String modelDirectory, String textureDirectory){
         //Załadowanie modelu
         Spatial brainPart = assetManager.loadModel(modelDirectory);
         //Stworzenie nowego materiału
@@ -337,8 +369,8 @@ public class BrainView extends SimpleApplication {
         //Ustawienie materiału obiektu
         brainPart.setMaterial(brainPartMaterial);
         //Dodanie gotowego materiału do mapy materiałów
-        objectMap.put(brainPart.getName(), brainPart);
-        materialMap.put(brainPart.getName(),brainPartMaterial);
+        objectMap.put(brainPartName,brainPart);
+        materialMap.put(brainPartName,brainPartMaterial);
         //Podczepienie obiektu pod zaczep
         pivot.attachChild(brainPart);
     }
@@ -363,18 +395,13 @@ public class BrainView extends SimpleApplication {
     
     //Tworzenie HUD
     public void createHUD(){
-        newHUDText("LPM = przywroc oryginalny material", 0.2f, 0.01f);
-        newHUDText("PPM = swiecacy material", 0.2f, 0.04f);
-        newHUDText("LPM + ruch myszy = obrot", 0.2f, 0.07f);
-        newHUDText("Spacja = zresetowanie pozycji", 0.2f, 0.10f);
-        newHUDText("Pause/Break = zatrzymanie symulacji", 0.2f, 0.13f);
-        
+        /*
         newHUDText("Alfa - 8-13Hz - kolor czerwony", 0.2f, 0.25f);
         newHUDText("Beta - 12-28Hz - kolor niebieski", 0.2f, 0.28f);
         newHUDText("Gamma - 40+Hz - kolor fioletowy/rózowy", 0.2f, 0.31f);
         newHUDText("Delta - 0.5-3Hz - kolor zielony", 0.2f, 0.34f);
         newHUDText("Theta - 4-7Hz - kolor żółty", 0.2f, 0.37f);
-        
+        */
         
     }
     
@@ -401,5 +428,7 @@ public class BrainView extends SimpleApplication {
     public void simpleRender(RenderManager rm) {
         
     }
+
+    
     
 }
