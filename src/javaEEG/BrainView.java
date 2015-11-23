@@ -68,11 +68,12 @@ public class BrainView extends SimpleApplication {
     private HashMap<String, String> glowTextureMap=
             new HashMap<String, String>();
     
+    private int multiplier=1;
     
     //kontrola czasu
     private long totalTime;
     private long currentTime;
-    private long oneSecond = 1000;
+    private long oneSecond = 100;
     
     //stop/start
     private boolean stopStart = true;
@@ -81,6 +82,7 @@ public class BrainView extends SimpleApplication {
     private static boolean bloomChange=true;
     private static boolean stageChange=true;
     
+    private float[] recentColor = new float[4];
     
     //wybrane miejsce na linii czasu
     private static int chosenStage = 0;
@@ -183,11 +185,23 @@ public class BrainView extends SimpleApplication {
         guiNode.attachChild(hudFrequency);
     }
     
+    private void pulse(){
+        bloom.setBloomIntensity(bloomIntensity);
+        bloomIntensity+=multiplier*0.33;
+        if(bloomIntensity>=8)
+            multiplier=-1;
+        else if(bloomIntensity<=1)
+            multiplier=1;
+    }
+    
     @Override
     public void simpleUpdate(float tpf) {
         
         
         if(stageChange){
+            if(!GlowManager.getColor(chosenStage).equals("noColor")){
+            recentColor=colorMap.get(GlowManager.getColor(chosenStage)).getColorArray();
+            }
             changeMaterial(GlowManager.getColor(chosenStage));
             stageChange=false;
         }
@@ -198,21 +212,17 @@ public class BrainView extends SimpleApplication {
         }
         
         
-        /*
-        if(stopStart){
-            //Zmiana materiału co sekundę.
-            currentTime = System.currentTimeMillis();
-            if(currentTime - totalTime >= oneSecond){
-                //tutaj zmiana materiali
-                changeMaterial(frequencyArray[arrayCounter]);
-                arrayCounter++;
-                if(arrayCounter==arrayLength){
-                    arrayCounter=0;
-                }
-                totalTime=currentTime;
-            }
+
+
+        //Zmiana materiału co sekundę.
+        currentTime = System.currentTimeMillis();
+        if(currentTime - totalTime >= oneSecond){
+            //tutaj zmiana materiali
+            pulse();
+            totalTime=currentTime;
         }
-        */
+
+
         
         
     }
@@ -236,7 +246,7 @@ public class BrainView extends SimpleApplication {
     public void changeMaterial(String glowColor){
         
         if(glowColor.equals("noColor")){
-            
+            //do nothing
         }else{
             addGlowMaterial("left_half", colorMap.get(glowColor), glowTextureMap.get("left_half"));
             addGlowMaterial("right_half", colorMap.get(glowColor), glowTextureMap.get("right_half"));
