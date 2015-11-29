@@ -7,6 +7,7 @@ import com.jme3.system.JmeCanvasContext;
 import com.jme3.util.JmeFormatter;
 import java.awt.BorderLayout;
 import java.awt.Canvas;
+import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
@@ -19,6 +20,9 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import static javaEEG.SwingView.createCanvas;
+import static javaEEG.SwingView.createSliders;
+import static javaEEG.SwingView.startApp;
 import static javaEEG.Widok.CreateSelectFile;
 import static javaEEG.Widok.ReadFile;
 import javax.swing.*;
@@ -26,7 +30,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-public class SwingView{
+public class SwingTestFrame extends JFrame{
 
     private static JmeCanvasContext context;
     private static Canvas canvas;
@@ -35,48 +39,32 @@ public class SwingView{
     private static JSlider bloomSlider, numberSlider;
     private static AppSettings settings;
     private static final String appClass = "javaEEG.BrainView";
-
+    private static JButton iconButton;
     
-    private static void createMenu(){
-        JMenuBar menuBar = new JMenuBar();
-        frame.setJMenuBar(menuBar);
+    private static boolean playStop = false;
 
-        JMenu optionsMenu = new JMenu("Opcje");
-        menuBar.add(optionsMenu);
-      
-        final JMenuItem itemReadFile = new JMenuItem("Wczytaj plik EEG");
-        optionsMenu.add(itemReadFile);
-        itemReadFile.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    CreateSelectFile(frame);    // wywołanie FileChooser
-                } catch (FileNotFoundException ex) {
-                    Logger.getLogger(SwingView.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-        });
-     
-        
-
-        JMenuItem itemExit = new JMenuItem("Wyjdź");
-        optionsMenu.add(itemExit);
-        itemExit.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent ae) {
-                frame.dispose();
-                app.stop();
-            }
-        });
+    public SwingTestFrame() throws HeadlessException {
+        createFrame();
     }
     
-    private static void createFrame(){
+    public static void setSlider(int sliderState){
+        numberSlider.setValue(sliderState);
+    }
+    
+    
+    
+    private void createFrame(){
         frame = new JFrame("EEG");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.addWindowListener(new WindowAdapter(){
             @Override
             public void windowClosed(WindowEvent e) {
                 app.stop();
+                System.exit(0);
             }
         });
+        
+        /*
         frame.addComponentListener(new ComponentListener() {
 
                     public void componentResized(ComponentEvent e) {
@@ -95,21 +83,21 @@ public class SwingView{
                         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
                     }
                 });    
-        
-       createSliders();
-       createMenu();
+        */
+       createPlayer();
+       createToolBar();
     }
     
-    public static void createSliders(){
+    public static void createPlayer(){
         
         numberSlider = new JSlider(JSlider.HORIZONTAL, 0, GlowManager.getArrayLength()-1, 0);
-        //Turn on labels at major tick marks.
         numberSlider.setMajorTickSpacing(1);
         numberSlider.setMinorTickSpacing(1);
         numberSlider.setPaintTicks(true);
         numberSlider.setPaintLabels(true);
         numberSlider.setBorder(BorderFactory.createTitledBorder("Linia czasu."));
-        frame.add(numberSlider, BorderLayout.SOUTH);
+        
+        
         
         numberSlider.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
@@ -117,36 +105,39 @@ public class SwingView{
             }
         });
         
-        
-        bloomSlider = new JSlider(JSlider.VERTICAL, 0, 10, 2);
-        // numberSlider.addChangeListener(this);
-        bloomSlider.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
-                BrainView.setBloomIntensity(bloomSlider.getValue());
+        ImageIcon playIcon = new ImageIcon("assets/Icons/play.png");
+        iconButton = new JButton(playIcon);
+        iconButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+               BrainView.setEnablePlay();
+               if(!playStop){
+                   iconButton.setIcon(new ImageIcon("assets/Icons/pause.png"));
+                   playStop=true;
+               }else{
+                   iconButton.setIcon(new ImageIcon("assets/Icons/play.png"));
+                   playStop=false;
+               }
+               
             }
         });
-        //Turn on labels at major tick marks.
-        bloomSlider.setMajorTickSpacing(1);
-        bloomSlider.setMinorTickSpacing(1);
-        bloomSlider.setPaintTicks(true);
-        bloomSlider.setPaintLabels(true);
-        bloomSlider.setBorder(BorderFactory.createTitledBorder("Ustawienie bloom."));
-        frame.add(bloomSlider, BorderLayout.EAST);
+        iconButton.setToolTipText("Odtwarzaj");
+        
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.add(iconButton, BorderLayout.BEFORE_LINE_BEGINS);
+        bottomPanel.add(numberSlider, BorderLayout.CENTER);
+        frame.add(bottomPanel, BorderLayout.SOUTH);
         
     }
-    
-   
-    
-    public static void CreateSelectFile(JFrame frame) throws FileNotFoundException
-    {   String userDir = System.getProperty("user.home");
-        JFileChooser fc = new JFileChooser(userDir+"/Desktop");
-        
        
+    public static void CreateSelectFile(JFrame frame) throws FileNotFoundException{
+        String userDir = System.getProperty("user.home");
+        JFileChooser fc = new JFileChooser(userDir+"/Desktop");
+  
         fc.setFileFilter(new FileNameExtensionFilter("Pliki tekstowe", "txt"));     // tylko rozszerzenie txt
         int returnVal = fc.showOpenDialog(frame);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             ReadFile(fc);
-           // log.append("Opening: " + file.getName() + "." + newline);
         } 
         else if(returnVal == JFileChooser.CANCEL_OPTION)
         {
@@ -156,10 +147,9 @@ public class SwingView{
     
     public static void createCanvas(String appClass){
         AppSettings settings = new AppSettings(true);
-        settings.setResolution(800, 600);
+        settings.setResolution(1280, 720);
         settings.setFrameRate(60);
         
-
         try{
             Class<? extends Application> clazz = (Class<? extends Application>) Class.forName(appClass);
             app = clazz.newInstance();
@@ -201,6 +191,62 @@ public class SwingView{
         app.restart();
     }
 
+    
+    private void createToolBar() {
+        
+        JToolBar toolbar = new JToolBar();
+
+        ImageIcon exitIcon = new ImageIcon("assets/Icons/close.png");
+        ImageIcon settingsIcon = new ImageIcon("assets/Icons/settings.png");
+        ImageIcon openIcon = new ImageIcon("assets/Icons/open.png");
+        
+        JButton openButton = new JButton(openIcon);
+        toolbar.add(openButton);
+        openButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                try {
+                    CreateSelectFile(frame);    // wywołanie FileChooser
+                } catch (FileNotFoundException ex) {
+                    Logger.getLogger(SwingView.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        });
+        openButton.setToolTipText("Otwórz plik");
+        
+        JButton settingsButton = new JButton(settingsIcon);
+        toolbar.add(settingsButton);
+        settingsButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                showSettingsDialog();
+            }
+        });
+        settingsButton.setToolTipText("Ustawienia");
+
+
+
+        JButton exitButton = new JButton(exitIcon);
+        toolbar.add(exitButton);
+        exitButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                System.exit(0);
+            }
+        });
+        exitButton.setToolTipText("Zamknij");
+
+        frame.add(toolbar, BorderLayout.NORTH);        
+    }
+    
+    private void showSettingsDialog(){
+        SettingsDialog settingsDialog = new SettingsDialog(this);
+        settingsDialog.pack();
+        settingsDialog.setLocationRelativeTo(frame);
+        settingsDialog.setVisible(true);
+    }
+    
+    
     public static void main(String[] args){
         JmeFormatter formatter = new JmeFormatter();
 
@@ -212,21 +258,18 @@ public class SwingView{
         
         createCanvas(appClass);
         
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException ex) {
-        }
+
         
         SwingUtilities.invokeLater(new Runnable(){
             public void run(){
                 JPopupMenu.setDefaultLightWeightPopupEnabled(false);
-
-                createFrame();
+                SwingTestFrame swingFrame = new SwingTestFrame();
                 frame.add(canvas, BorderLayout.CENTER);
                 frame.pack();
                 startApp();
                 frame.setLocationRelativeTo(null);
                 frame.setVisible(true);
+                
             }
         });
     }

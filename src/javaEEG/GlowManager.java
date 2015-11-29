@@ -10,7 +10,7 @@ public class GlowManager {
     private static int arrayLength = frequencyArray.length;
     
     public static int getArrayLength(){
-        return arrayLength;
+        return arrayLength-1;
     }
     
     public static double getFrequency(int value){

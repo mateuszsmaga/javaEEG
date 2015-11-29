@@ -5,7 +5,6 @@ import com.jme3.texture.Texture;
 import com.jme3.renderer.RenderManager;
 import com.jme3.scene.Spatial;
 import com.jme3.input.controls.ActionListener;
-import com.jme3.input.controls.MouseButtonTrigger;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Ray;
 import com.jme3.math.Vector2f;
@@ -23,6 +22,8 @@ import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Node;
 import com.jme3.system.AppSettings;
+import com.jme3.system.JmeContext;
+import org.lwjgl.opengl.Display;
 
 /**
  *
@@ -71,9 +72,12 @@ public class BrainView extends SimpleApplication {
     private int multiplier=1;
     
     //kontrola czasu
-    private long totalTime;
-    private long currentTime;
-    private long oneSecond = 100;
+    private long totalTimePulse;
+    private long totalTimePlayer;
+    private long currentTimeForPulse;
+    private long currentTimeForPlayer;
+    private long oneSecond = 1000;
+    private long bloomChangeTime = 100;
     
     //stop/start
     private boolean stopStart = true;
@@ -81,12 +85,17 @@ public class BrainView extends SimpleApplication {
     //Czy trzeba cos zmienic?
     private static boolean bloomChange=true;
     private static boolean stageChange=true;
+    private static boolean enablePlay=false;
     
     private float[] recentColor = new float[4];
     
     //wybrane miejsce na linii czasu
     private static int chosenStage = 0;
-
+    private static int playingStartCounter = 0;
+    
+    //dlugosc tablicy odtwarzania
+    private static int arrayLength = 0;
+    private int playerCounter = 0;
     
     public static void setBloomIntensity(float bloom){
         bloomIntensity=bloom;
@@ -98,20 +107,32 @@ public class BrainView extends SimpleApplication {
        stageChange=true;
     }
     
+    public static void setEnablePlay(){
+        if(enablePlay)
+            enablePlay=false;
+        else{
+            enablePlay=true;
+            playingStartCounter = chosenStage;
+            arrayLength=GlowManager.getArrayLength();
+        }
+                    
+    }
+    
     //Stworzenie nowej aplikacji i jej ustawienia
     public static void main(String[] args) {
         //Ustawienia aplikacji
         AppSettings settings = new AppSettings(true);
         settings.setFrameRate(60);
-        settings.setResolution(1280, 720);
+        settings.setResolution(640,480);
         settings.setTitle("EEG");
         settings.setAudioRenderer(null);
+
         
         //Stworzenie aplikacji i uruchomienie jej
         BrainView app = new BrainView();
         app.setShowSettings(false);
         app.setSettings(settings);
-        app.start();
+        app.start(JmeContext.Type.Display);
         
     }
        
@@ -126,9 +147,12 @@ public class BrainView extends SimpleApplication {
 
         //wyłączenie statystyk
         setDisplayStatView(false);
+        
+        Display.setResizable(true);
        
         //Pobranie czasu startu
-        totalTime = System.currentTimeMillis();
+        totalTimePlayer = System.currentTimeMillis();
+        totalTimePulse = System.currentTimeMillis();
         
         //Tworzenie HUD
         createHUD();
@@ -163,7 +187,7 @@ public class BrainView extends SimpleApplication {
         chaseCam.setDefaultVerticalRotation(0);
         chaseCam.setDefaultDistance(8);
         chaseCam.setRotationSensitivity(10f);
-        chaseCam.setMinDistance(10);
+        chaseCam.setMinDistance(9);
         chaseCam.setMaxDistance(20);
         chaseCam.setInvertVerticalAxis(true);
     }
@@ -187,7 +211,7 @@ public class BrainView extends SimpleApplication {
     
     private void pulse(){
         bloom.setBloomIntensity(bloomIntensity);
-        bloomIntensity+=multiplier*0.33;
+        bloomIntensity+=multiplier*0.9;
         if(bloomIntensity>=8)
             multiplier=-1;
         else if(bloomIntensity<=1)
@@ -198,37 +222,45 @@ public class BrainView extends SimpleApplication {
     public void simpleUpdate(float tpf) {
         
         
+        
         if(stageChange){
-            if(!GlowManager.getColor(chosenStage).equals("noColor")){
-            recentColor=colorMap.get(GlowManager.getColor(chosenStage)).getColorArray();
-            }
-            changeMaterial(GlowManager.getColor(chosenStage));
+            changeMaterial(chosenStage);
             stageChange=false;
         }
         
-        if(bloomChange){
-            bloom.setBloomIntensity(bloomIntensity);
-            bloomChange=false;
-        }
-        
-        
 
-
-        //Zmiana materiału co sekundę.
-        currentTime = System.currentTimeMillis();
-        if(currentTime - totalTime >= oneSecond){
-            //tutaj zmiana materiali
+        //pulsowanie
+        currentTimeForPulse = System.currentTimeMillis();
+        if(currentTimeForPulse - totalTimePulse >= bloomChangeTime){
             pulse();
-            totalTime=currentTime;
+            totalTimePulse=currentTimeForPulse;
         }
+        
+        //Zmiana materiału co sekundę
+        if(enablePlay){
+            currentTimeForPlayer = System.currentTimeMillis();
+            if(currentTimeForPlayer - totalTimePlayer >= oneSecond){
+                totalTimePlayer=currentTimeForPlayer;
+                if(playingStartCounter<=arrayLength){
+                    changeMaterial(playingStartCounter);
+                    SwingTestFrame.setSlider(playingStartCounter);
+                    playingStartCounter++;
+                }else{
+                    playingStartCounter=0;
+                }          
+            }    
+        }
+        
 
-
+        
         
         
     }
     
     private void fillColorMap(){
-        colorMap.put("green", new ColorRGBA(0.247f, 0.749f, 0.247f, 1));
+        
+       
+        colorMap.put("green", new ColorRGBA(0, 1, 0, 1));
         colorMap.put("red", new ColorRGBA(1, 0.2f, 0.2f, 1));
         colorMap.put("blue", new ColorRGBA(0.2f, 0.9725f, 0.9725f, 1));
         colorMap.put("yellow", new ColorRGBA(0.9725f, 0.9725f, 0.2f, 1));
@@ -243,15 +275,15 @@ public class BrainView extends SimpleApplication {
     
     
     
-    public void changeMaterial(String glowColor){
-        
+    public void changeMaterial(int stageNumber){
+        String glowColor = GlowManager.getColor(stageNumber);
         if(glowColor.equals("noColor")){
-            //do nothing
+            //nic
         }else{
             addGlowMaterial("left_half", colorMap.get(glowColor), glowTextureMap.get("left_half"));
             addGlowMaterial("right_half", colorMap.get(glowColor), glowTextureMap.get("right_half"));
         }
-        hudFrequency.setText("Wyswietlana czestotliwosc: "+GlowManager.getFrequency(chosenStage)+"Hz.");
+        hudFrequency.setText("Wyswietlana czestotliwosc: "+GlowManager.getFrequency(stageNumber)+"Hz. Element tablicy nr: "+stageNumber+".");
     }
     
     
