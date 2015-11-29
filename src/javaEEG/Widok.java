@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 package javaEEG;
-import JavaEEG.DFT;
+import javaEEG.DFT;
 import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.File;
@@ -13,6 +13,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import biz.source_code.dsp.math.Complex;
+import org.jtransforms.utils.*;
+import org.jtransforms.fft.DoubleFFT_1D;
+import org.jtransforms.fft.DoubleFFT_2D;
+
 /**
  *
  * @author Admin
@@ -23,6 +27,7 @@ public class Widok {
   public static  double[] chanel2;
   public static  double[] chanel3;
   public static  double[] chanel4;
+
                   
     
     //Jfile chooser
@@ -88,10 +93,30 @@ public class Widok {
         }
         
         
-        Complex[] r=DFT.directDft(chanel1);
-          for (int j=0; j<chanel1.length;j++) System.out.println(r[j]+"      " +j);
-        
-        
+       // Complex[] r=DFT.directDft(chanel1);
+       //   for (int j=0; j<chanel1.length;j++) System.out.println(r[j]+"      " +j);
+          
+        DoubleFFT_1D fft = new DoubleFFT_1D(chanel1.length);
+        double FS= 250;
+        double[] fft2 = new double[chanel1.length*2];
+        System.arraycopy(chanel1, 0, fft2, 0, chanel1.length);
+        fft.realForward(fft2);
+        double real;
+        double im;
+        double[] magnitude = new double[fft2.length/2];
+        for (int a=0; a<=fft2.length; a++)
+        {
+            real=fft2[2*a];
+            im=fft2[2*a+1];
+        magnitude[a]= Math.sqrt(real*real+im*im);
+        }
+        for(int j=0; j<magnitude.length;j++) System.out.println(magnitude[j]+"   "+j);
+    /*    int a=0;
+        for(double d: fft2)
+        {
+            a=a+1;
+            System.out.println(d+"   "+a);
+        }*/
     
     }
 
