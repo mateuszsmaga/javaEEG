@@ -144,6 +144,7 @@ public class BrainView extends SimpleApplication {
         bloom.setBlurScale(3.0f);
         fpp.addFilter(bloom);
         viewPort.addProcessor(fpp);
+        
 
         //wyłączenie statystyk
         setDisplayStatView(false);
@@ -224,7 +225,8 @@ public class BrainView extends SimpleApplication {
         
         
         if(stageChange){
-            changeMaterial(chosenStage);
+            for(int i=0; i<4;i++)
+                changeMaterial(i, chosenStage);
             stageChange=false;
         }
         
@@ -242,8 +244,9 @@ public class BrainView extends SimpleApplication {
             if(currentTimeForPlayer - totalTimePlayer >= oneSecond){
                 totalTimePlayer=currentTimeForPlayer;
                 if(playingStartCounter<=arrayLength){
-                    changeMaterial(playingStartCounter);
-                    SwingTestFrame.setSlider(playingStartCounter);
+                    for(int i=0; i<4;i++)
+                        changeMaterial(i,playingStartCounter);
+                    SwingView.setSlider(playingStartCounter);
                     playingStartCounter++;
                 }else{
                     playingStartCounter=0;
@@ -268,22 +271,36 @@ public class BrainView extends SimpleApplication {
     }
     
     private void fillGlowTetureMap() {
-        glowTextureMap.put("left_half", "Textures/glowMaps/glowMap_lh.png");
-        glowTextureMap.put("right_half", "Textures/glowMaps/glowMap_rh.png");
+        
+        
+        glowTextureMap.put("front_rh", "Textures/glowMaps/front_rh_glow.png");
+        glowTextureMap.put("back_rh", "Textures/glowMaps/back_rh_glow.png");
+        glowTextureMap.put("front_lh", "Textures/glowMaps/front_lh_glow.png");
+        glowTextureMap.put("back_lh", "Textures/glowMaps/back_lh_glow.png");
+
     }
     
     
     
     
-    public void changeMaterial(int stageNumber){
-        String glowColor = GlowManager.getColor(stageNumber);
+    public void changeMaterial(int channel, int stageNumber){
+        String glowColor = GlowManager.getColor(channel, stageNumber);
         if(glowColor.equals("noColor")){
             //nic
         }else{
-            addGlowMaterial("left_half", colorMap.get(glowColor), glowTextureMap.get("left_half"));
-            addGlowMaterial("right_half", colorMap.get(glowColor), glowTextureMap.get("right_half"));
+            switch(channel){
+                case 0: addGlowMaterial("front_rh", colorMap.get(glowColor), glowTextureMap.get("front_rh"));
+                        break;
+                case 1: addGlowMaterial("front_lh", colorMap.get(glowColor), glowTextureMap.get("front_lh"));
+                        break;
+                case 2: addGlowMaterial("back_rh", colorMap.get(glowColor), glowTextureMap.get("back_rh"));
+                        break;
+                case 3: addGlowMaterial("back_lh", colorMap.get(glowColor), glowTextureMap.get("back_lh"));
+                        break;
+                default: System.out.print("Wybrano zły obszar podswietlania\n");
+                    break;
+            }      
         }
-        hudFrequency.setText("Wyswietlana czestotliwosc: "+GlowManager.getFrequency(stageNumber)+"Hz. Element tablicy nr: "+stageNumber+".");
     }
     
     
@@ -389,8 +406,12 @@ public class BrainView extends SimpleApplication {
         pivot = new Node("pivot");
         
         //Dodawanie czesci mozgu
-        addNewBrainPart("left_half", "Models/new_brain/left_half.j3o", "Textures/lh_pial.png");
-        addNewBrainPart("right_half", "Models/new_brain/right_half.j3o", "Textures/rh_pial.png");
+        addNewBrainPart("left_half", "Models/ready/lh.j3o", "Textures/lh_color.png");
+        addNewBrainPart("right_half", "Models/ready/rh.j3o", "Textures/rh_color.png");
+        addNewBrainPart("back_lh", "Models/ready/back_lh.j3o", "Textures/back_lh_color.png");
+        addNewBrainPart("front_lh", "Models/ready/front_lh.j3o", "Textures/front_lh_color.png");
+        addNewBrainPart("back_rh", "Models/ready/back_rh.j3o", "Textures/back_rh_color.png");
+        addNewBrainPart("front_rh", "Models/ready/front_rh.j3o", "Textures/front_rh_color.png");
         
         //Podczepienie zaczepu do rootNode
         rootNode.attachChild(pivot); 
