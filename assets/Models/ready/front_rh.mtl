@@ -1,7 +1,7 @@
-# Blender MTL File: 'untitled.blend'
+# Blender MTL File: 'mozg_testy.blend'
 # Material Count: 1
 
-newmtl fluid_yellow
+newmtl kolor
 Ns 96.078431
 Ka 0.000000 0.000000 0.000000
 Kd 0.640000 0.640000 0.640000

@@ -1,24 +1,34 @@
 package javaEEG;
 
+import java.util.Random;
+
 public class GlowManager {
     //chwilowa tablica częstotliwości do wyświetlenia
-    private static double[] frequencyArray = {0.7, 35, 12, 2, 85, 12.15, 0.3,
-                            3, 7, 22, 43, 11, 17, 32, 37, 31,
-                            1, 18, 21, 22, 23, 25, 11, 37, 41,
-                            24, 65, 15, 18, 41, 31, 13, 5, 17,
-                            2, 87, 3, 8, 5, 3, 4, 11, 21, 32};
-    private static int arrayLength = frequencyArray.length;
+    private static double[][] frequencyArray;
+    private static int arrayLength=30;
     
     public static int getArrayLength(){
-        return arrayLength;
+        return arrayLength-1;
     }
     
-    public static double getFrequency(int value){
-        return frequencyArray[value];
+    public static double getFrequency(int channel, int value){
+        return frequencyArray[channel][value];
     }
     
-    public static String getColor(int value){
-        double frequency = frequencyArray[value];
+    public static void randomizeChannels(){
+        frequencyArray = new double[4][30];
+        Random generator = new Random();
+        
+        for(int i=0; i<30; i++){
+            for(int j=0; j<4; j++){
+                frequencyArray[j][i]= generator.nextDouble()*50;
+            }
+        }
+        
+    }
+    
+    public static String getColor(int channel, int value){
+        double frequency = frequencyArray[channel][value];
         if(frequency>=0.5 && frequency<=3){
             //zielony
             return "green";

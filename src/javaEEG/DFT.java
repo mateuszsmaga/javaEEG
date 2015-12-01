@@ -10,7 +10,7 @@
 // Please contact the author if you need another license.
 // This module is provided "as is", without warranties of any kind.
 
-package JavaEEG;
+package javaEEG;
 import biz.source_code.dsp.math.Complex;
 
 /**
