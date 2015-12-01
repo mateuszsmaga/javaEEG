@@ -31,19 +31,24 @@ public class GlowManager {
         double frequency = frequencyArray[channel][value];
         if(frequency>=0.5 && frequency<=3){
             //zielony
-            return "green";
+            if(BrainView.getButtonState(0))
+                return "delta";
         }else if(frequency>=8 && frequency<=13){
             //czerwony
-            return "red";
+            if(BrainView.getButtonState(1))
+                return "alfa";
         }else if(frequency>=12 && frequency<=28){
             //niebieski
-            return "blue";
+            if(BrainView.getButtonState(2))
+                return "beta";
         }else if(frequency>=4 && frequency<=7){
             //zolty
-            return "yellow";
+            if(BrainView.getButtonState(3))
+                return "theta";
         }else if(frequency>=40){
             //rozowo-fioletowy
-            return "purple";
+            if(BrainView.getButtonState(4))
+                return "gamma";
         }
         
         return "noColor";

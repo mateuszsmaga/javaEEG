@@ -2,6 +2,7 @@ package javaEEG;
 
 import com.jme3.app.Application;
 import com.jme3.app.SimpleApplication;
+import com.jme3.math.ColorRGBA;
 import com.jme3.system.AppSettings;
 import com.jme3.system.JmeCanvasContext;
 import com.jme3.util.JmeFormatter;
@@ -53,9 +54,15 @@ public class SwingView extends JFrame{
     
     
     public SwingView() throws HeadlessException {
-        createFrame();
         GlowManager.randomizeChannels();
         setScore(0);
+        BrainView.fillColorMap();
+        for(int i=5; i<5; i++){
+            BrainView.flipButtonState(i);
+        }
+        createFrame();
+        
+        
         
     }
     
@@ -210,7 +217,7 @@ public class SwingView extends JFrame{
     public static void createCanvas(String appClass){
         AppSettings settings = new AppSettings(true);
         settings.setResolution(937, 400);
-        settings.setFrameRate(60);
+        //settings.setFrameRate(60);
         
         try{
             Class<? extends Application> clazz = (Class<? extends Application>) Class.forName(appClass);
@@ -287,9 +294,33 @@ public class SwingView extends JFrame{
             }
         });
         settingsButton.setToolTipText("Ustawienia");
+        
+        toolbar.add(Box.createHorizontalGlue());
 
 
+        
+        
+        toolbar.add(createWaveButton("Włącz/wyłącz wyświetlanie fali alfa.","ALFA",1));
+        toolbar.add(createColorButton("alfa"));
+        toolbar.addSeparator();
+        
+        toolbar.add(createWaveButton("Włącz/wyłącz wyświetlanie fali beta.","BETA",2));
+        toolbar.add(createColorButton("beta"));
+        toolbar.addSeparator();
+        
+        toolbar.add(createWaveButton("Włącz/wyłącz wyświetlanie fali gamma.","GAMMA",4));
+        toolbar.add(createColorButton("gamma"));
+        toolbar.addSeparator();
+        
+        toolbar.add(createWaveButton("Włącz/wyłącz wyświetlanie fali delta.","DELTA",0));
+        toolbar.add(createColorButton("delta"));
+        toolbar.addSeparator();
+        
+        toolbar.add(createWaveButton("Włącz/wyłącz wyświetlanie fali theta.","THETA",3));
+        toolbar.add(createColorButton("theta"));
+        toolbar.addSeparator();
 
+        
         JButton exitButton = new JButton(exitIcon);
         exitButton.setFocusPainted(false);
         toolbar.add(exitButton);
@@ -299,9 +330,55 @@ public class SwingView extends JFrame{
                 System.exit(0);
             }
         });
+                
         exitButton.setToolTipText("Zamknij");
+        
+        frame.add(toolbar, BorderLayout.NORTH);        
+    }
+    
+    private JToggleButton createWaveButton(String toolTip, String text, final int flipSwitch){
+        final boolean selected=true;
+        final JToggleButton button = new JToggleButton(text, selected);
+        button.setToolTipText(toolTip);
+        button.setFocusPainted(false);
+        BrainView.flipButtonState(flipSwitch);
+        button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if(selected){
+                    BrainView.flipButtonState(flipSwitch);
+                }else{
+                    BrainView.flipButtonState(flipSwitch);
+                }
+            }
+        });
+        return button;
+    }
+    
+    private JButton createColorButton(final String wave){
+        final JButton button = new JButton(new ImageIcon("assets/Icons/background.png"));
+        button.setToolTipText("Wybierz kolor.");
+        ColorRGBA rgba = BrainView.getColor(wave);
+        Color color = new Color(rgba.getRed(), rgba.getGreen(), rgba.getBlue(), rgba.getAlpha());
+        button.setBackground(color);
 
-        frame.add(toolbar, BorderLayout.PAGE_START);        
+        button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                Color initialBackground = button.getBackground();
+                Color background = JColorChooser.showDialog(null, "JColorChooser Sample", initialBackground);
+                if (background != null) {
+                  button.setBackground(background);
+                  BrainView.setColor(wave, background);
+                }
+
+            }
+        });
+        button.setFocusPainted(false);
+        button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                
+            }
+        });
+        return button;
     }
     
     private void showSettingsDialog(){
