@@ -6,11 +6,13 @@ import com.jme3.math.ColorRGBA;
 import com.jme3.system.AppSettings;
 import com.jme3.system.JmeCanvasContext;
 import com.jme3.util.JmeFormatter;
+import com.sun.jmx.snmp.tasks.Task;
 import java.awt.BorderLayout;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.HeadlessException;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
@@ -35,6 +37,17 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.awt.Dimension;
+import java.awt.Toolkit;
+import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+
+import javax.swing.*;
 
 public class SwingView extends JFrame{
 
@@ -50,20 +63,21 @@ public class SwingView extends JFrame{
     private static boolean playStop = false;
     private static GraphPanel graphPanel;
     private static List<Double> score = new ArrayList();
-    
-    
+    private JPanel mainPanel = new JPanel();
+    public static ProgressBar progressBar;
     
     public SwingView() throws HeadlessException {
         GlowManager.randomizeChannels();
         setScore(0);
         BrainView.fillColorMap();
-        for(int i=5; i<5; i++){
-            BrainView.flipButtonState(i);
-        }
         createFrame();
         
         
         
+    }
+    
+    public JPanel getMainPanel() {
+        return mainPanel;
     }
     
     private static void setScore(int channel){
@@ -151,6 +165,8 @@ public class SwingView extends JFrame{
                
             }
         });
+        
+        
         
         String[] channels = {"Channel 1", "Channel 2", "Channel 3", "Channel 4"};
         
@@ -295,6 +311,19 @@ public class SwingView extends JFrame{
         });
         settingsButton.setToolTipText("Ustawienia");
         
+        
+        JButton testButton = new JButton(new ImageIcon("assets/Icons/background.png"));
+        testButton.setFocusPainted(false);
+        toolbar.add(testButton);
+        testButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                showProgressBar();
+            }
+        });
+        testButton.setToolTipText("Test");
+        
+        
         toolbar.add(Box.createHorizontalGlue());
 
 
@@ -337,17 +366,18 @@ public class SwingView extends JFrame{
     }
     
     private JToggleButton createWaveButton(String toolTip, String text, final int flipSwitch){
-        final boolean selected=true;
-        final JToggleButton button = new JToggleButton(text, selected);
+        final JToggleButton button = new JToggleButton(text, true);
         button.setToolTipText(toolTip);
         button.setFocusPainted(false);
-        BrainView.flipButtonState(flipSwitch);
+        BrainView.flipButtonState(flipSwitch, true);
         button.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                if(selected){
-                    BrainView.flipButtonState(flipSwitch);
+                if(button.isSelected()){
+                    BrainView.flipButtonState(flipSwitch, true);
+                    BrainView.setWaveChange(true);
                 }else{
-                    BrainView.flipButtonState(flipSwitch);
+                    BrainView.flipButtonState(flipSwitch, false);
+                    BrainView.setWaveChange(true);
                 }
             }
         });
@@ -368,6 +398,7 @@ public class SwingView extends JFrame{
                 if (background != null) {
                   button.setBackground(background);
                   BrainView.setColor(wave, background);
+                  BrainView.setWaveChange(true);
                 }
 
             }
@@ -388,6 +419,12 @@ public class SwingView extends JFrame{
         settingsDialog.setVisible(true);
     }
     
+    private void showProgressBar(){
+        progressBar = new ProgressBar(this);
+        progressBar.pack();
+        progressBar.setLocationRelativeTo(frame);
+        progressBar.setVisible(true);
+    }
     
     public static void main(String[] args){
         JmeFormatter formatter = new JmeFormatter();

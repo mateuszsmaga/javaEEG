@@ -88,12 +88,15 @@ public class BrainView extends SimpleApplication {
     private static boolean bloomChange=true;
     private static boolean stageChange=true;
     private static boolean enablePlay=false;
+    private static boolean waveChange=false;
     
     private float[] recentColor = new float[4];
+    
     
     //wybrane miejsce na linii czasu
     private static int chosenStage = 0;
     private static int playingStartCounter = 0;
+    private static int lastChange;
     
     //dlugosc tablicy odtwarzania
     private static int arrayLength = 0;
@@ -109,14 +112,13 @@ public class BrainView extends SimpleApplication {
        stageChange=true;
     }
     
-    public static void flipButtonState(int value){
-        if(value>=0 && value <=5){
-            if(buttonStates[value])
-                buttonStates[value]=false;
-            else
-                buttonStates[value]=true;
-        }
-        
+    public static void setWaveChange(boolean bool){
+        waveChange=bool;
+    }
+    
+    public static void flipButtonState(int value, boolean bool){
+        if(value>=0 && value <=5)
+                buttonStates[value]=bool; 
     }
     
     public static boolean getButtonState(int value){
@@ -246,7 +248,10 @@ public class BrainView extends SimpleApplication {
             for(int i=0; i<4;i++)
                 changeMaterial(i, chosenStage);
             stageChange=false;
+            lastChange=chosenStage;
         }
+        
+        
         
 
         //pulsowanie
@@ -265,6 +270,7 @@ public class BrainView extends SimpleApplication {
                     for(int i=0; i<4;i++)
                         changeMaterial(i,playingStartCounter);
                     SwingView.setSlider(playingStartCounter);
+                    lastChange=playingStartCounter;
                     playingStartCounter++;
                 }else{
                     playingStartCounter=0;
@@ -272,11 +278,14 @@ public class BrainView extends SimpleApplication {
             }    
         }
         
+        if(waveChange){
+            for(int i=0; i<4;i++)
+                changeMaterial(i,lastChange);     
+            waveChange=false;
+        }
 
-        
-        
-        
     }
+    
     
     public static void fillColorMap(){
         
