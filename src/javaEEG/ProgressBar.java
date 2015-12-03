@@ -22,10 +22,7 @@ public class ProgressBar extends JDialog {
   private void initUI() {
         Container content = getContentPane();
         progressBar = new JProgressBar();
-        progressBar.setValue(25);
         progressBar.setStringPainted(true);
-        Border border = BorderFactory.createTitledBorder("Wczytuję plik...");
-        progressBar.setBorder(border);
         content.add(progressBar, BorderLayout.CENTER);
         setSize(300, 100);
         setVisible(true);

@@ -6,15 +6,10 @@ import com.jme3.math.ColorRGBA;
 import com.jme3.system.AppSettings;
 import com.jme3.system.JmeCanvasContext;
 import com.jme3.util.JmeFormatter;
-import com.sun.jmx.snmp.tasks.Task;
 import java.awt.BorderLayout;
 import java.awt.Canvas;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.HeadlessException;
-import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.WindowAdapter;
@@ -31,21 +26,15 @@ import static javaEEG.SwingView.createCanvas;
 import static javaEEG.SwingView.startApp;
 import static javaEEG.Widok.CreateSelectFile;
 import static javaEEG.Widok.ReadFile;
-import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.awt.Dimension;
-import java.awt.Toolkit;
-import java.awt.Window;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 
 import javax.swing.*;
 
@@ -65,7 +54,7 @@ public class SwingView extends JFrame{
     private static List<Double> score = new ArrayList();
     private JPanel mainPanel = new JPanel();
     public static ProgressBar progressBar;
-    
+    private JToolBar toolbar;
     public SwingView() throws HeadlessException {
         GlowManager.randomizeChannels();
         setScore(0);
@@ -232,7 +221,7 @@ public class SwingView extends JFrame{
     
     public static void createCanvas(String appClass){
         AppSettings settings = new AppSettings(true);
-        settings.setResolution(937, 400);
+        settings.setResolution(937, 350);
         //settings.setFrameRate(60);
         
         try{
@@ -279,7 +268,9 @@ public class SwingView extends JFrame{
     
     private void createToolBar() {
         
-        JToolBar toolbar = new JToolBar(null, JToolBar.HORIZONTAL);
+        toolbar = new JToolBar(null, JToolBar.HORIZONTAL);
+        
+        toolbar.setFloatable(false);
 
         ImageIcon exitIcon = new ImageIcon("assets/Icons/close.png");
         ImageIcon settingsIcon = new ImageIcon("assets/Icons/settings.png");
@@ -292,7 +283,9 @@ public class SwingView extends JFrame{
             @Override
             public void actionPerformed(ActionEvent event) {
                 try {
+                    createProgressBar();
                     CreateSelectFile(frame);    // wywołanie FileChooser
+                    
                 } catch (FileNotFoundException ex) {
                     Logger.getLogger(SwingView.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -311,44 +304,30 @@ public class SwingView extends JFrame{
         });
         settingsButton.setToolTipText("Ustawienia");
         
-        
+        /*
         JButton testButton = new JButton(new ImageIcon("assets/Icons/background.png"));
         testButton.setFocusPainted(false);
         toolbar.add(testButton);
         testButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
-                showProgressBar();
+                createProgressBar();
             }
         });
         testButton.setToolTipText("Test");
-        
+        */
         
         toolbar.add(Box.createHorizontalGlue());
 
 
         
         
-        toolbar.add(createWaveButton("Włącz/wyłącz wyświetlanie fali alfa.","ALFA",1));
-        toolbar.add(createColorButton("alfa"));
-        toolbar.addSeparator();
-        
-        toolbar.add(createWaveButton("Włącz/wyłącz wyświetlanie fali beta.","BETA",2));
-        toolbar.add(createColorButton("beta"));
-        toolbar.addSeparator();
-        
-        toolbar.add(createWaveButton("Włącz/wyłącz wyświetlanie fali gamma.","GAMMA",4));
-        toolbar.add(createColorButton("gamma"));
-        toolbar.addSeparator();
-        
-        toolbar.add(createWaveButton("Włącz/wyłącz wyświetlanie fali delta.","DELTA",0));
-        toolbar.add(createColorButton("delta"));
-        toolbar.addSeparator();
-        
-        toolbar.add(createWaveButton("Włącz/wyłącz wyświetlanie fali theta.","THETA",3));
-        toolbar.add(createColorButton("theta"));
-        toolbar.addSeparator();
 
+        addNewToolBarButton("Włącz/wyłącz wyświetlanie fali delta.","DELTA","delta",0);
+        addNewToolBarButton("Włącz/wyłącz wyświetlanie fali ALFA.","ALFA","alfa",1);
+        addNewToolBarButton("Włącz/wyłącz wyświetlanie fali beta.","BETA","beta",2);
+        addNewToolBarButton("Włącz/wyłącz wyświetlanie fali theta.","THETA","theta",3);
+        addNewToolBarButton("Włącz/wyłącz wyświetlanie fali gamma.","GAMMA","gamma",4);
         
         JButton exitButton = new JButton(exitIcon);
         exitButton.setFocusPainted(false);
@@ -363,6 +342,16 @@ public class SwingView extends JFrame{
         exitButton.setToolTipText("Zamknij");
         
         frame.add(toolbar, BorderLayout.NORTH);        
+    }
+    
+    private void addNewToolBarButton(String toolTip, String waveText, String waveColor, int number){
+        JPanel panel = new JPanel();
+        panel.setMaximumSize(new Dimension(60, 60));
+        panel.setLayout(new GridLayout(2, 1));
+        panel.add(createWaveButton(toolTip,waveText,number));
+        panel.add(createColorButton(waveColor));
+        toolbar.add(panel);
+        toolbar.addSeparator();
     }
     
     private JToggleButton createWaveButton(String toolTip, String text, final int flipSwitch){
@@ -419,11 +408,11 @@ public class SwingView extends JFrame{
         settingsDialog.setVisible(true);
     }
     
-    private void showProgressBar(){
+    public void createProgressBar(){
         progressBar = new ProgressBar(this);
         progressBar.pack();
         progressBar.setLocationRelativeTo(frame);
-        progressBar.setVisible(true);
+        progressBar.setVisible(false); 
     }
     
     public static void main(String[] args){

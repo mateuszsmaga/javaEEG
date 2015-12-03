@@ -46,11 +46,16 @@ public class Widok {
     public static void ReadFile(JFileChooser fc)                                    //czytanie pliku
     {
         
+        
         File plik = fc.getSelectedFile();
         String nazwaPlik=plik.getName();                                            //nazwa pliku
         String path = plik.getAbsolutePath();                                       //ścieżka do pliku
         JOptionPane.showMessageDialog(null, "Wybrany Plik to: "+ nazwaPlik +" Scieżka: "+ path);    //okno z informacją
    
+        
+        
+        SwingView.progressBar.setVisible(true);
+        SwingView.progressBar.setNewValues("Wczytuję plik...", 25);
         
         try {
             BufferedReader in = new BufferedReader(new FileReader(path));           
