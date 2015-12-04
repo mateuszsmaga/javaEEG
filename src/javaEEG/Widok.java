@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package javaEEG;
 import javaEEG.DFT;
 import javax.swing.*;
@@ -188,11 +183,11 @@ public class Widok {
             }
         }
         
-        double freq = (max_index*Fs)/(fft.length);
-        System.out.println("freq:"+String.format("%.9f",freq)+"  max_index: "+max_index+"  max_magnitude "+max_magnitude);
+        double dominantFreq =  max_index*Fs/N;
+        System.out.println("freq:"+String.format("%.9f",dominantFreq)+"  max_index: "+max_index+"  max_magnitude "+max_magnitude);
         
         
-        zapis.println("freq:"+String.format("%.9f",freq)+" max_index"+max_index+" max_magnitude:"+max_magnitude);
+        zapis.println("freq:"+String.format("%.9f",dominantFreq)+" max_index"+max_index+" max_magnitude:"+max_magnitude);
         zapis.close();
         zapis2.close();
       }
