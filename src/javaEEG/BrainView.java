@@ -23,6 +23,7 @@ import com.jme3.math.Vector3f;
 import com.jme3.scene.Node;
 import com.jme3.system.AppSettings;
 import com.jme3.system.JmeContext;
+import java.awt.Color;
 import org.lwjgl.opengl.Display;
 
 /**
@@ -62,7 +63,7 @@ public class BrainView extends SimpleApplication {
             new HashMap<String, Spatial>();
     
     //Mapa kolorow
-    private HashMap<String, ColorRGBA> colorMap = 
+    private static HashMap<String, ColorRGBA> colorMap = 
             new HashMap<String, ColorRGBA>();
     
     //Mapa tekstur
@@ -81,17 +82,21 @@ public class BrainView extends SimpleApplication {
     
     //stop/start
     private boolean stopStart = true;
+    private static boolean[] buttonStates = new boolean[5];
     
     //Czy trzeba cos zmienic?
     private static boolean bloomChange=true;
     private static boolean stageChange=true;
     private static boolean enablePlay=false;
+    private static boolean waveChange=false;
     
     private float[] recentColor = new float[4];
+    
     
     //wybrane miejsce na linii czasu
     private static int chosenStage = 0;
     private static int playingStartCounter = 0;
+    private static int lastChange;
     
     //dlugosc tablicy odtwarzania
     private static int arrayLength = 0;
@@ -107,6 +112,21 @@ public class BrainView extends SimpleApplication {
        stageChange=true;
     }
     
+    public static void setWaveChange(boolean bool){
+        waveChange=bool;
+    }
+    
+    public static void flipButtonState(int value, boolean bool){
+        if(value>=0 && value <=5)
+                buttonStates[value]=bool; 
+    }
+    
+    public static boolean getButtonState(int value){
+         if(value>=0 && value <=5){
+             return buttonStates[value];
+         }
+         return false;
+    }
     public static void setEnablePlay(){
         if(enablePlay)
             enablePlay=false;
@@ -122,7 +142,7 @@ public class BrainView extends SimpleApplication {
     public static void main(String[] args) {
         //Ustawienia aplikacji
         AppSettings settings = new AppSettings(true);
-        settings.setFrameRate(60);
+        //settings.setFrameRate(60);
         settings.setResolution(640,480);
         settings.setTitle("EEG");
         settings.setAudioRenderer(null);
@@ -228,7 +248,10 @@ public class BrainView extends SimpleApplication {
             for(int i=0; i<4;i++)
                 changeMaterial(i, chosenStage);
             stageChange=false;
+            lastChange=chosenStage;
         }
+        
+        
         
 
         //pulsowanie
@@ -247,6 +270,7 @@ public class BrainView extends SimpleApplication {
                     for(int i=0; i<4;i++)
                         changeMaterial(i,playingStartCounter);
                     SwingView.setSlider(playingStartCounter);
+                    lastChange=playingStartCounter;
                     playingStartCounter++;
                 }else{
                     playingStartCounter=0;
@@ -254,20 +278,34 @@ public class BrainView extends SimpleApplication {
             }    
         }
         
+        if(waveChange){
+            for(int i=0; i<4;i++)
+                changeMaterial(i,lastChange);     
+            waveChange=false;
+        }
 
-        
-        
-        
     }
     
-    private void fillColorMap(){
+    
+    public static void fillColorMap(){
         
        
-        colorMap.put("green", new ColorRGBA(0, 1, 0, 1));
-        colorMap.put("red", new ColorRGBA(1, 0.2f, 0.2f, 1));
-        colorMap.put("blue", new ColorRGBA(0.2f, 0.9725f, 0.9725f, 1));
-        colorMap.put("yellow", new ColorRGBA(0.9725f, 0.9725f, 0.2f, 1));
-        colorMap.put("purple", new ColorRGBA(0.792f, 0.117f, 1, 1));
+        colorMap.put("delta", new ColorRGBA(0, 1, 0, 1));//green
+        colorMap.put("alfa", new ColorRGBA(1, 0.2f, 0.2f, 1));//red
+        colorMap.put("beta", new ColorRGBA(0.2f, 0.9725f, 0.9725f, 1));//blue
+        colorMap.put("theta", new ColorRGBA(0.9725f, 0.9725f, 0.2f, 1));//yellow
+        colorMap.put("gamma", new ColorRGBA(0.792f, 0.117f, 1, 1));//purple
+    }
+    
+    public static void setColor(String wave, Color color){
+        float[] compArray=new float[4];
+        color.getRGBComponents(compArray);
+        ColorRGBA newColor = new ColorRGBA(compArray[0], compArray[1], compArray[2], compArray[3]);
+        colorMap.put(wave, newColor);
+    }
+    
+    public static ColorRGBA getColor(String wave){    
+        return colorMap.get(wave);
     }
     
     private void fillGlowTetureMap() {
@@ -286,7 +324,18 @@ public class BrainView extends SimpleApplication {
     public void changeMaterial(int channel, int stageNumber){
         String glowColor = GlowManager.getColor(channel, stageNumber);
         if(glowColor.equals("noColor")){
-            //nic
+            switch(channel){
+                case 0: removeGlowMaterial("front_rh");
+                        break;
+                case 1: removeGlowMaterial("front_lh");
+                        break;
+                case 2: removeGlowMaterial("back_rh");
+                        break;
+                case 3: removeGlowMaterial("back_lh");
+                        break;
+                default: System.out.print("Wybrano zły obszar podswietlania\n");
+                    break;
+            }      
         }else{
             switch(channel){
                 case 0: addGlowMaterial("front_rh", colorMap.get(glowColor), glowTextureMap.get("front_rh"));
@@ -304,6 +353,13 @@ public class BrainView extends SimpleApplication {
     }
     
     
+    private void removeGlowMaterial(String objectName){
+         //Nowy materiał
+        Material selectedMaterial = materialMap.get(objectName).clone();
+        selectedMaterial.setTexture("GlowMap", null);
+        //Zmiana materiału zaznaczonego obiektu
+        objectMap.get(objectName).setMaterial(selectedMaterial);
+    }
     
     //dodanie podświetlonego obszaru
     private void addGlowMaterial(String objectName, ColorRGBA glowColor, String glowMapTexture){

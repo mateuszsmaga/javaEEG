@@ -2,16 +2,14 @@ package javaEEG;
 
 import com.jme3.app.Application;
 import com.jme3.app.SimpleApplication;
+import com.jme3.math.ColorRGBA;
 import com.jme3.system.AppSettings;
 import com.jme3.system.JmeCanvasContext;
 import com.jme3.util.JmeFormatter;
 import java.awt.BorderLayout;
 import java.awt.Canvas;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.HeadlessException;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.WindowAdapter;
@@ -28,12 +26,17 @@ import static javaEEG.SwingView.createCanvas;
 import static javaEEG.SwingView.startApp;
 import static javaEEG.Widok.CreateSelectFile;
 import static javaEEG.Widok.ReadFile;
-import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import java.awt.Dimension;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.*;
 
 public class SwingView extends JFrame{
 
@@ -49,14 +52,21 @@ public class SwingView extends JFrame{
     private static boolean playStop = false;
     private static GraphPanel graphPanel;
     private static List<Double> score = new ArrayList();
-    
-    
-    
+    private JPanel mainPanel = new JPanel();
+    public static ProgressBar progressBar;
+    private JToolBar toolbar;
     public SwingView() throws HeadlessException {
-        createFrame();
         GlowManager.randomizeChannels();
         setScore(0);
+        BrainView.fillColorMap();
+        createFrame();
         
+        
+        
+    }
+    
+    public JPanel getMainPanel() {
+        return mainPanel;
     }
     
     private static void setScore(int channel){
@@ -146,6 +156,8 @@ public class SwingView extends JFrame{
             }
         });
         
+        
+        
         String[] channels = {"Channel 1", "Channel 2", "Channel 3", "Channel 4"};
         
         
@@ -210,8 +222,8 @@ public class SwingView extends JFrame{
     
     public static void createCanvas(String appClass){
         AppSettings settings = new AppSettings(true);
-        settings.setResolution(937, 400);
-        settings.setFrameRate(60);
+        settings.setResolution(937, 350);
+        //settings.setFrameRate(60);
         
         try{
             Class<? extends Application> clazz = (Class<? extends Application>) Class.forName(appClass);
@@ -257,7 +269,9 @@ public class SwingView extends JFrame{
     
     private void createToolBar() {
         
-        JToolBar toolbar = new JToolBar(null, JToolBar.HORIZONTAL);
+        toolbar = new JToolBar(null, JToolBar.HORIZONTAL);
+        
+        toolbar.setFloatable(false);
 
         ImageIcon exitIcon = new ImageIcon("assets/Icons/close.png");
         ImageIcon settingsIcon = new ImageIcon("assets/Icons/settings.png");
@@ -270,7 +284,9 @@ public class SwingView extends JFrame{
             @Override
             public void actionPerformed(ActionEvent event) {
                 try {
+                    createProgressBar();
                     CreateSelectFile(frame);    // wywołanie FileChooser
+                    
                 } catch (FileNotFoundException ex) {
                     Logger.getLogger(SwingView.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -288,9 +304,32 @@ public class SwingView extends JFrame{
             }
         });
         settingsButton.setToolTipText("Ustawienia");
+        
+        /*
+        JButton testButton = new JButton(new ImageIcon("assets/Icons/background.png"));
+        testButton.setFocusPainted(false);
+        toolbar.add(testButton);
+        testButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                createProgressBar();
+            }
+        });
+        testButton.setToolTipText("Test");
+        */
+        
+        toolbar.add(Box.createHorizontalGlue());
 
 
+        
+        
 
+        addNewToolBarButton("Włącz/wyłącz wyświetlanie fali delta.","DELTA","delta",0);
+        addNewToolBarButton("Włącz/wyłącz wyświetlanie fali ALFA.","ALFA","alfa",1);
+        addNewToolBarButton("Włącz/wyłącz wyświetlanie fali beta.","BETA","beta",2);
+        addNewToolBarButton("Włącz/wyłącz wyświetlanie fali theta.","THETA","theta",3);
+        addNewToolBarButton("Włącz/wyłącz wyświetlanie fali gamma.","GAMMA","gamma",4);
+        
         JButton exitButton = new JButton(exitIcon);
         exitButton.setFocusPainted(false);
         toolbar.add(exitButton);
@@ -300,9 +339,67 @@ public class SwingView extends JFrame{
                 System.exit(0);
             }
         });
+                
         exitButton.setToolTipText("Zamknij");
+        
+        frame.add(toolbar, BorderLayout.NORTH);        
+    }
+    
+    private void addNewToolBarButton(String toolTip, String waveText, String waveColor, int number){
+        JPanel panel = new JPanel();
+        panel.setMaximumSize(new Dimension(60, 60));
+        panel.setLayout(new GridLayout(2, 1));
+        panel.add(createWaveButton(toolTip,waveText,number));
+        panel.add(createColorButton(waveColor));
+        toolbar.add(panel);
+        toolbar.addSeparator();
+    }
+    
+    private JToggleButton createWaveButton(String toolTip, String text, final int flipSwitch){
+        final JToggleButton button = new JToggleButton(text, true);
+        button.setToolTipText(toolTip);
+        button.setFocusPainted(false);
+        BrainView.flipButtonState(flipSwitch, true);
+        button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if(button.isSelected()){
+                    BrainView.flipButtonState(flipSwitch, true);
+                    BrainView.setWaveChange(true);
+                }else{
+                    BrainView.flipButtonState(flipSwitch, false);
+                    BrainView.setWaveChange(true);
+                }
+            }
+        });
+        return button;
+    }
+    
+    private JButton createColorButton(final String wave){
+        final JButton button = new JButton(new ImageIcon("assets/Icons/background.png"));
+        button.setToolTipText("Wybierz kolor.");
+        ColorRGBA rgba = BrainView.getColor(wave);
+        Color color = new Color(rgba.getRed(), rgba.getGreen(), rgba.getBlue(), rgba.getAlpha());
+        button.setBackground(color);
 
-        frame.add(toolbar, BorderLayout.PAGE_START);        
+        button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                Color initialBackground = button.getBackground();
+                Color background = JColorChooser.showDialog(null, "JColorChooser Sample", initialBackground);
+                if (background != null) {
+                  button.setBackground(background);
+                  BrainView.setColor(wave, background);
+                  BrainView.setWaveChange(true);
+                }
+
+            }
+        });
+        button.setFocusPainted(false);
+        button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                
+            }
+        });
+        return button;
     }
     
     private void showSettingsDialog(){
@@ -312,6 +409,12 @@ public class SwingView extends JFrame{
         settingsDialog.setVisible(true);
     }
     
+    public void createProgressBar(){
+        progressBar = new ProgressBar(this);
+        progressBar.pack();
+        progressBar.setLocationRelativeTo(frame);
+        progressBar.setVisible(false); 
+    }
     
     public static void main(String[] args){
         JmeFormatter formatter = new JmeFormatter();
