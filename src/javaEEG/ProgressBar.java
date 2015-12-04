@@ -25,7 +25,7 @@ public class ProgressBar extends JDialog {
         progressBar.setStringPainted(true);
         content.add(progressBar, BorderLayout.CENTER);
         setSize(300, 100);
-        setVisible(true);
+        setVisible(false);
         
         setModalityType(ModalityType.APPLICATION_MODAL);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
