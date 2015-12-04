@@ -71,6 +71,7 @@ public class SwingView extends JFrame{
     
     private static void setScore(int channel){
         int length = GlowManager.getArrayLength();
+        score.clear();
         for(int i=0; i<=length; i++){
             score.add(GlowManager.getFrequency(channel,i));
         }
