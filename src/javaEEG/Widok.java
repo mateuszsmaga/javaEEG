@@ -52,10 +52,7 @@ public class Widok {
         String path = plik.getAbsolutePath();                                       //ścieżka do pliku
         JOptionPane.showMessageDialog(null, "Wybrany Plik to: "+ nazwaPlik +" Scieżka: "+ path);    //okno z informacją
    
-        
-        
-        SwingView.progressBar.setVisible(true);
-        SwingView.progressBar.setNewValues("Wczytuję plik...", 25);
+
         
         try {
             BufferedReader in = new BufferedReader(new FileReader(path));           
