@@ -1,14 +1,21 @@
 package javaEEG;
-
 import java.util.Random;
 
+
+//Zarządzanie podświetleniem
 public class GlowManager {
+    
     //chwilowa tablica częstotliwości do wyświetlenia
     private static double[][] frequencyArray;
-    private static int arrayLength=30;
+    private static int arrayLength=500;
+    private static int numberOfChannels = 19;
     
     public static int getArrayLength(){
         return arrayLength-1;
+    }
+    
+    public static int getNumberofChannels(){
+        return numberOfChannels;
     }
     
     public static double getFrequency(int channel, int value){
@@ -16,17 +23,19 @@ public class GlowManager {
     }
     
     public static void randomizeChannels(){
-        frequencyArray = new double[4][30];
+        frequencyArray = new double[numberOfChannels][arrayLength];
         Random generator = new Random();
         
-        for(int i=0; i<30; i++){
-            for(int j=0; j<4; j++){
+        for(int i=0; i<arrayLength; i++){
+            for(int j=0; j<numberOfChannels; j++){
                 frequencyArray[j][i]= generator.nextDouble()*50;
             }
         }
         
     }
     
+    
+    //Zwracanie rodzaju fali w zależności od częstotliwości
     public static String getColor(int channel, int value){
         double frequency = frequencyArray[channel][value];
         if(frequency>=0.5 && frequency<=3){

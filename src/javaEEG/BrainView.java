@@ -1,5 +1,6 @@
 package javaEEG;
 
+import javaEEG.Swing.SwingView;
 import com.jme3.collision.CollisionResults;
 import com.jme3.texture.Texture;
 import com.jme3.renderer.RenderManager;
@@ -26,10 +27,6 @@ import com.jme3.system.JmeContext;
 import java.awt.Color;
 import org.lwjgl.opengl.Display;
 
-/**
- *
- * @author PC
- */
 public class BrainView extends SimpleApplication {
     
     private static final Logger logger =
@@ -102,6 +99,9 @@ public class BrainView extends SimpleApplication {
     private static int arrayLength = 0;
     private int playerCounter = 0;
     
+    //wszystkie nazwy obiektów
+    private String[] objectNames = {"Fp1","Fp2","F7","F3","FZ","F4","F8","T3","C3","CZ","C4","T4","T5","P3","PZ","P4","T6","O1","O2"};
+    
     public static void setBloomIntensity(float bloom){
         bloomIntensity=bloom;
         bloomChange=true;
@@ -144,7 +144,7 @@ public class BrainView extends SimpleApplication {
         AppSettings settings = new AppSettings(true);
         //settings.setFrameRate(60);
         settings.setResolution(640,480);
-        settings.setTitle("EEG");
+        settings.setTitle("BrainView");
         settings.setAudioRenderer(null);
 
         
@@ -161,7 +161,7 @@ public class BrainView extends SimpleApplication {
         //UStawienie shaderów
         FilterPostProcessor fpp = new FilterPostProcessor(assetManager);
         bloom = new BloomFilter(BloomFilter.GlowMode.Objects);
-        bloom.setBlurScale(3.0f);
+        bloom.setBlurScale(0.3f);
         fpp.addFilter(bloom);
         viewPort.addProcessor(fpp);
         
@@ -232,7 +232,7 @@ public class BrainView extends SimpleApplication {
     
     private void pulse(){
         bloom.setBloomIntensity(bloomIntensity);
-        bloomIntensity+=multiplier*0.9;
+        bloomIntensity+=multiplier*0.7;
         if(bloomIntensity>=8)
             multiplier=-1;
         else if(bloomIntensity<=1)
@@ -245,7 +245,7 @@ public class BrainView extends SimpleApplication {
         
         
         if(stageChange){
-            for(int i=0; i<4;i++)
+            for(int i=0; i<GlowManager.getNumberofChannels();i++)
                 changeMaterial(i, chosenStage);
             stageChange=false;
             lastChange=chosenStage;
@@ -310,47 +310,35 @@ public class BrainView extends SimpleApplication {
     
     private void fillGlowTetureMap() {
         
-        
+        /*
         glowTextureMap.put("front_rh", "Textures/glowMaps/front_rh_glow.png");
         glowTextureMap.put("back_rh", "Textures/glowMaps/back_rh_glow.png");
         glowTextureMap.put("front_lh", "Textures/glowMaps/front_lh_glow.png");
         glowTextureMap.put("back_lh", "Textures/glowMaps/back_lh_glow.png");
+        */
+        
+        for(int i=0; i<objectNames.length;i++){
+            loadGlowTexture(objectNames[i]);
+        }
 
     }
     
     
     
+    private void loadGlowTexture(String name){
+        glowTextureMap.put(name, "Textures/glowMap/"+name+".png");
+    }
+    
     
     public void changeMaterial(int channel, int stageNumber){
         String glowColor = GlowManager.getColor(channel, stageNumber);
         if(glowColor.equals("noColor")){
-            switch(channel){
-                case 0: removeGlowMaterial("front_rh");
-                        break;
-                case 1: removeGlowMaterial("front_lh");
-                        break;
-                case 2: removeGlowMaterial("back_rh");
-                        break;
-                case 3: removeGlowMaterial("back_lh");
-                        break;
-                default: System.out.print("Wybrano zły obszar podswietlania\n");
-                    break;
-            }      
+            removeGlowMaterial(objectNames[channel]);
         }else{
-            switch(channel){
-                case 0: addGlowMaterial("front_rh", colorMap.get(glowColor), glowTextureMap.get("front_rh"));
-                        break;
-                case 1: addGlowMaterial("front_lh", colorMap.get(glowColor), glowTextureMap.get("front_lh"));
-                        break;
-                case 2: addGlowMaterial("back_rh", colorMap.get(glowColor), glowTextureMap.get("back_rh"));
-                        break;
-                case 3: addGlowMaterial("back_lh", colorMap.get(glowColor), glowTextureMap.get("back_lh"));
-                        break;
-                default: System.out.print("Wybrano zły obszar podswietlania\n");
-                    break;
-            }      
+            addGlowMaterial(objectNames[channel], colorMap.get(glowColor), glowTextureMap.get(objectNames[channel]));   
         }
     }
+    
     
     
     private void removeGlowMaterial(String objectName){
@@ -461,17 +449,19 @@ public class BrainView extends SimpleApplication {
         //Stworzenie nowego zaczepu
         pivot = new Node("pivot");
         
-        //Dodawanie czesci mozgu
-        addNewBrainPart("left_half", "Models/ready/lh.j3o", "Textures/lh_color.png");
-        addNewBrainPart("right_half", "Models/ready/rh.j3o", "Textures/rh_color.png");
-        addNewBrainPart("back_lh", "Models/ready/back_lh.j3o", "Textures/back_lh_color.png");
-        addNewBrainPart("front_lh", "Models/ready/front_lh.j3o", "Textures/front_lh_color.png");
-        addNewBrainPart("back_rh", "Models/ready/back_rh.j3o", "Textures/back_rh_color.png");
-        addNewBrainPart("front_rh", "Models/ready/front_rh.j3o", "Textures/front_rh_color.png");
+        for(int i=0; i<objectNames.length;i++){
+            loadPartElements(objectNames[i]);
+        }
+        
+        addNewBrainPart("bottom", "Models/full/bottom.j3o", "Textures/colorMap/bottom.png");
         
         //Podczepienie zaczepu do rootNode
         rootNode.attachChild(pivot); 
         rootNodeLocation = rootNode.getLocalRotation().clone();
+    }
+    
+    private void loadPartElements(String name){
+         addNewBrainPart(name, "Models/full/"+name+".j3o", "Textures/colorMap/"+name+".png");
     }
     
     //Ustawienie materialu dla poszczegolnych czesci mozgu
