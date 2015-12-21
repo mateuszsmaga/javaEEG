@@ -243,7 +243,7 @@ public class SwingView extends JFrame{
     public static void createCanvas(String appClass){
         AppSettings settings = new AppSettings(true);
         settings.setResolution(937, 350);
-        //settings.setFrameRate(60);
+        settings.setFrameRate(60);
         
         try{
             Class<? extends Application> clazz = (Class<? extends Application>) Class.forName(appClass);

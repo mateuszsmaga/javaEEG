@@ -105,7 +105,7 @@ public class BrainView extends SimpleApplication {
     
     
     //obrót o kąt
-    private float rotation=FastMath.PI/360;
+    private float rotation=FastMath.PI/270;
     private float previousVerticalRotation = 0;
     private float previousHorizontalRotation = FastMath.PI/2;
     
