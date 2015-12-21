@@ -56,6 +56,7 @@ public class SwingView extends JFrame{
     private static boolean playStop = false;
     private static GraphPanel graphPanel;
     private static List<Double> score = new ArrayList();
+    private static List<Double> time = new ArrayList();
     private JPanel mainPanel = new JPanel();
     public static ProgressBar progressBar;
     private JToolBar toolbar;
@@ -83,8 +84,11 @@ public class SwingView extends JFrame{
     private static void setScore(int channel){
         int length = GlowManager.getArrayLength();
         score.clear();
+        time.clear();
         for(int i=0; i<=length; i++){
             score.add(GlowManager.getFrequency(channel,i));
+            time.add(GlowManager.getTime(channel, i));
+            System.out.print(i+" element listy: "+GlowManager.getTime(channel, i)+","+GlowManager.getFrequency(channel, i)+".\n");
         }
     }
     
@@ -204,7 +208,7 @@ public class SwingView extends JFrame{
         playerPanel.add(numberSlider, BorderLayout.CENTER);
         
         JPanel chartPanel = new JPanel(new BorderLayout());
-        graphPanel = new GraphPanel(score);
+        graphPanel = new GraphPanel(time, score);
         graphPanel.setPreferredSize(new Dimension(300, 150));
         graphPanel.setBorder(BorderFactory.createTitledBorder("Wykres aktualnie wybranego kanału"));
         graphPanel.setBackground(mainBackgroundColor);

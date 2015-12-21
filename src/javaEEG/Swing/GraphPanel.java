@@ -12,6 +12,7 @@ import java.awt.Stroke;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import javaEEG.GlowManager;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -27,8 +28,10 @@ public class GraphPanel extends JPanel {
     private int pointWidth = 4;
     private int numberYDivisions = 6;
     private List<Double> scores;
-
-    public GraphPanel(List<Double> scores) {
+    private List<Double> times;
+    
+    public GraphPanel(List<Double> times, List<Double> scores) {
+        this.times = times;
         this.scores = scores;
     }
 
@@ -38,12 +41,13 @@ public class GraphPanel extends JPanel {
         Graphics2D g2 = (Graphics2D) g;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        double xScale = ((double) getWidth() - (2 * padding) - labelPadding) / (scores.size() - 1);
+        double xScale = ((double) getWidth() - (2 * padding) - labelPadding) / (GlowManager.getWidth()-1);
         double yScale = ((double) getHeight() - 2 * padding - labelPadding) / (getMaxScore() - getMinScore());
 
+        
         List<Point> graphPoints = new ArrayList<Point>();   
         for (int i = 0; i < scores.size(); i++) {
-            int x1 = (int) (i * xScale + padding + labelPadding);
+            int x1 = (int) (times.get(i) * xScale + padding + labelPadding);
             int y1 = (int) ((getMaxScore() - scores.get(i)) * yScale + padding);
             graphPoints.add(new Point(x1, y1));
         }
@@ -72,13 +76,13 @@ public class GraphPanel extends JPanel {
         }
 
         // and for x axis
-        for (int i = 0; i < scores.size(); i++) {
+        for (int i = 0; i < GlowManager.getWidth(); i++) {
             if (scores.size() > 1) {
-                int x0 = i * (getWidth() - padding * 2 - labelPadding) / (scores.size() - 1) + padding + labelPadding;
+                int x0 = i * (getWidth() - padding * 2 - labelPadding) / (GlowManager.getWidth()-1) + padding + labelPadding;
                 int x1 = x0;
                 int y0 = getHeight() - padding - labelPadding;
                 int y1 = y0 - pointWidth;
-                if ((i % ((int) ((scores.size() / 20.0)) + 1)) == 0) {
+                if ((i % ((int) ((GlowManager.getWidth() / 20.0))+1)) == 0) {
                     g2.setColor(gridColor);
                     g2.drawLine(x0, getHeight() - padding - labelPadding - 1 - pointWidth, x1, padding);
                     g2.setColor(Color.BLACK);
@@ -125,6 +129,7 @@ public class GraphPanel extends JPanel {
         for (Double score : scores) {
             minScore = Math.min(minScore, score);
         }
+        minScore=Math.floor(minScore);
         return minScore;
     }
 
@@ -133,6 +138,7 @@ public class GraphPanel extends JPanel {
         for (Double score : scores) {
             maxScore = Math.max(maxScore, score);
         }
+        maxScore=Math.ceil(maxScore);
         return maxScore;
     }
 

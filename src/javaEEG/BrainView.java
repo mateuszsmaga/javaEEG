@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 import com.jme3.font.BitmapText;
 import com.jme3.app.SimpleApplication;
 import com.jme3.input.ChaseCamera;
+import com.jme3.input.controls.AnalogListener;
 import com.jme3.input.controls.KeyTrigger;
 import com.jme3.material.Material;
 import com.jme3.math.FastMath;
@@ -101,6 +102,12 @@ public class BrainView extends SimpleApplication {
     
     //wszystkie nazwy obiektów
     private String[] objectNames = {"Fp1","Fp2","F7","F3","FZ","F4","F8","T3","C3","CZ","C4","T4","T5","P3","PZ","P4","T6","O1","O2"};
+    
+    
+    //obrót o kąt
+    private float rotation=FastMath.PI/360;
+    private float previousVerticalRotation = 0;
+    private float previousHorizontalRotation = FastMath.PI/2;
     
     public static void setBloomIntensity(float bloom){
         bloomIntensity=bloom;
@@ -206,9 +213,9 @@ public class BrainView extends SimpleApplication {
         chaseCam = new ChaseCamera(cam, rootNode, inputManager);
         chaseCam.setDefaultHorizontalRotation(FastMath.PI/2);
         chaseCam.setDefaultVerticalRotation(0);
-        chaseCam.setDefaultDistance(8);
+        chaseCam.setDefaultDistance(10);
         chaseCam.setRotationSensitivity(10f);
-        chaseCam.setMinDistance(9);
+        chaseCam.setMinDistance(10);
         chaseCam.setMaxDistance(20);
         chaseCam.setInvertVerticalAxis(true);
     }
@@ -362,6 +369,27 @@ public class BrainView extends SimpleApplication {
    
     }
     
+    
+    private AnalogListener analogListener = new AnalogListener() {
+        public void onAnalog(String binding, float value, float tpf) {    
+            if (binding.equals("leftRot")) {
+                chaseCam.setDefaultHorizontalRotation(previousHorizontalRotation+rotation);
+                previousHorizontalRotation+=rotation;
+            } 
+            if (binding.equals("rightRot")) {
+                chaseCam.setDefaultHorizontalRotation(previousHorizontalRotation-rotation);
+                previousHorizontalRotation-=rotation;
+            } 
+            if (binding.equals("upRot")) {
+                chaseCam.setDefaultVerticalRotation(previousVerticalRotation+rotation);
+                previousVerticalRotation+=rotation;
+            } 
+            if (binding.equals("downRot")) {
+                chaseCam.setDefaultVerticalRotation(previousVerticalRotation-rotation);
+                previousVerticalRotation-=rotation;
+            } 
+        }
+    };
 
 
     private ActionListener actionListener = new ActionListener() {
@@ -375,9 +403,14 @@ public class BrainView extends SimpleApplication {
                         stopStart=true;
             } 
             */
+            
+            
+            
             if (binding.equals("Space") && keyPressed) {
                 chaseCam.setDefaultHorizontalRotation(FastMath.PI/2);
                 chaseCam.setDefaultVerticalRotation(0);
+                previousHorizontalRotation=FastMath.PI/2;
+                previousVerticalRotation=0;
             }   
    
             if (binding.equals("RightMouseButtonClick") && keyPressed) {
@@ -441,6 +474,15 @@ public class BrainView extends SimpleApplication {
         
         inputManager.addMapping("Pause", new KeyTrigger(keyInput.KEY_PAUSE));
         inputManager.addListener(actionListener, "Pause");
+        
+        inputManager.addMapping("leftRot", new KeyTrigger(keyInput.KEY_LEFT));
+        inputManager.addListener(analogListener, "leftRot");
+        inputManager.addMapping("rightRot", new KeyTrigger(keyInput.KEY_RIGHT));
+        inputManager.addListener(analogListener, "rightRot");
+        inputManager.addMapping("downRot", new KeyTrigger(keyInput.KEY_DOWN));
+        inputManager.addListener(analogListener, "downRot");
+        inputManager.addMapping("upRot", new KeyTrigger(keyInput.KEY_UP));
+        inputManager.addListener(analogListener, "upRot");
     }
     
      
