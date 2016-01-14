@@ -1,7 +1,5 @@
 package javaEEG.Swing;
 
-import javaEEG.Swing.SettingsDialog;
-import javaEEG.Swing.ProgressBar;
 import com.jme3.app.Application;
 import com.jme3.app.SimpleApplication;
 import com.jme3.math.ColorRGBA;
@@ -35,12 +33,16 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import javaEEG.BrainView;
 import javaEEG.GlowManager;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 
 public class SwingView extends JFrame{
 
@@ -61,18 +63,55 @@ public class SwingView extends JFrame{
     public static ProgressBar progressBar;
     private JToolBar toolbar;
     
+    private static JLabel playTimeLabel = new JLabel("Tutaj odliczamy1");
     
-    
-    private static Color backgroundColor = Color.lightGray.brighter();
+   
+    public static Color backgroundColor = Color.lightGray.brighter();
     private static Color mainBackgroundColor = new Color(192, 192, 192);
     
-    private static String chosenChannel = "";
+    private static String nameToShow = GlowManager.channels[0];
+    private static String waveToShow = "alfa";
+    
+    public static Border blackline = BorderFactory.createLineBorder(Color.BLACK);
+    
+    //zarządzanie licznikiem czasu
+    public static double lastMaxTime=0;
+    public static double lastPlayTime = 0;
+    
+    //przeliczony czas
+    public static String lastMaxTimeString;
+    public static String lastPlayTimeString;
+    
+    //Ktory wykres zostal wybrany?
+    private static int lastChannel = 0;
+    
+    //oznaczenia kolorów na pasku
+    public static JLabel alfaLabel = new JLabel("   ");
+    public static JLabel betaLabel = new JLabel("   ");
+    public static JLabel deltaLabel = new JLabel("   ");
+    public static JLabel thetaLabel = new JLabel("   ");
+    
+    //Wybrana fala do wyświetlania
+    private static int chosenWave = 0; 
+    private static int chosenScore = 0;
+    
+    private static void convertTimes(){
+        long maxTime = (long)(lastMaxTime*1000);
+        long playTime =  (long)(lastPlayTime*1000);
+        lastMaxTimeString=(new SimpleDateFormat("mm:ss:SSSS")).format(new Date(maxTime));
+        lastPlayTimeString=(new SimpleDateFormat("mm:ss:SSSS")).format(new Date(playTime));
+    }
+    
+    public static int getChosenWave(){
+        return chosenWave;
+    }
     
     public SwingView() throws HeadlessException {
-        GlowManager.randomizeChannels();
+        GlowManager.initialize();
         setScore(0);
         BrainView.fillColorMap();
         createFrame();    
+        
     }
     
     public JPanel getMainPanel() {
@@ -85,10 +124,10 @@ public class SwingView extends JFrame{
         int length = GlowManager.getArrayLength();
         score.clear();
         time.clear();
+        lastChannel = channel;
         for(int i=0; i<=length; i++){
-            score.add(GlowManager.getFrequency(channel,i));
-            time.add(GlowManager.getTime(channel, i));
-            System.out.print(i+" element listy: "+GlowManager.getTime(channel, i)+","+GlowManager.getFrequency(channel, i)+".\n");
+            score.add(GlowManager.getFrequency(channel,chosenWave, i));
+            time.add(GlowManager.getTime(channel, chosenWave, i));
         }
     }
     
@@ -128,9 +167,21 @@ public class SwingView extends JFrame{
                     }
                 });    
         
+        Image image = new ImageIcon("assets/Icons/testIcon.png").getImage();
+        frame.setIconImage(image);
+        
        createBottomScreen();
        createToolBar();
     }
+    
+    //Zmiana licznika czasu
+    private static void changeTimeLabel(){
+        convertTimes();
+        playTimeLabel.setText("<html><font color=black>"+lastPlayTimeString+
+                "</font><font color=red>/</font><font color=black>"+
+                lastMaxTimeString+"</font></html>");
+    }
+    
     
     //Stworzenie całego paska na dole (play/stop, wykres, zmiana kanałów, linia czasu)
     public static void createBottomScreen(){
@@ -139,16 +190,13 @@ public class SwingView extends JFrame{
         int length=GlowManager.getArrayLength()/30;
         length=(int)Math.pow(10, Math.ceil(Math.log10(length)));
         numberSlider.setMajorTickSpacing(length);
-        numberSlider.setMinorTickSpacing(1);
-        numberSlider.setPaintTicks(true);
-        numberSlider.setPaintLabels(true);
-        numberSlider.setBorder(BorderFactory.createTitledBorder("Linia czasu."));
+        numberSlider.setBorder(BorderFactory.createTitledBorder(blackline, "Linia czasu."));
         numberSlider.setBackground(mainBackgroundColor);
-        
-        
         numberSlider.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
                 BrainView.setChosenStage(numberSlider.getValue());
+                lastPlayTime=GlowManager.getTime(lastChannel, chosenWave, numberSlider.getValue());
+                changeTimeLabel();
             }
         });
 
@@ -173,29 +221,37 @@ public class SwingView extends JFrame{
             }
         });
         
+        //tutaj Jlabel playTimeLabel!!!1
+        lastMaxTime=GlowManager.getMaxTime(0, chosenWave);
+        changeTimeLabel();
+        playTimeLabel.setBackground(Color.LIGHT_GRAY);
+        playTimeLabel.setOpaque(true);
+        
+       
         
         
-        String[] channels = {"Channel 1", "Channel 2", "Channel 3", "Channel 4"};
-        
-        
-        channelList = new JList(channels);
+        playTimeLabel.setBorder(BorderFactory.createTitledBorder(blackline, "Czas"));
+        channelList = new JList(GlowManager.channels);
         channelList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         channelList.setLayoutOrientation(JList.VERTICAL);
         channelList.addListSelectionListener(new ListSelectionListener(){
             public void valueChanged(ListSelectionEvent e) {
                 if (!e.getValueIsAdjusting()) {
                     String name = (String) channelList.getSelectedValue();
-                    if(name.equals("Channel 1")){
-                        setScore(0);
-                    }else if(name.equals("Channel 2")){
-                        setScore(1);
-                    }else if(name.equals("Channel 3")){
-                        setScore(2);
-                    }else if(name.equals("Channel 4")){
-                        setScore(3);
+
+                    for(int i = 0; i<GlowManager.channels.length; i++){
+                        if(name.equals(GlowManager.channels[i])){
+                            setScore(i);
+                            nameToShow=name;
+                            chosenScore = i;
+                            lastMaxTime=GlowManager.getMaxTime(i, chosenWave);
+                            lastPlayTime=GlowManager.getTime(lastChannel, chosenWave, numberSlider.getValue());
+                            changeTimeLabel();
+                            break;
+                        }
                     }
                     graphPanel.setScores(score);
-                    graphPanel.setBorder(BorderFactory.createTitledBorder("Wykres - "+name));
+                    graphPanel.setBorder(BorderFactory.createTitledBorder(blackline, "Wykres - "+name+". Fala - "+waveToShow));
                 }
             }
         });
@@ -203,17 +259,27 @@ public class SwingView extends JFrame{
         JScrollPane listScroller = new JScrollPane(channelList);
         listScroller.setPreferredSize(new Dimension(83,0));
         
+        //odtwarzacz
         JPanel playerPanel = new JPanel(new BorderLayout());
         playerPanel.add(iconButton, BorderLayout.BEFORE_LINE_BEGINS);
         playerPanel.add(numberSlider, BorderLayout.CENTER);
+        playerPanel.add(playTimeLabel, BorderLayout.AFTER_LINE_ENDS);
         
+        
+        
+        
+        //wykresy
         JPanel chartPanel = new JPanel(new BorderLayout());
         graphPanel = new GraphPanel(time, score);
         graphPanel.setPreferredSize(new Dimension(300, 150));
-        graphPanel.setBorder(BorderFactory.createTitledBorder("Wykres aktualnie wybranego kanału"));
+        graphPanel.setBorder(BorderFactory.createTitledBorder(blackline, "Wykres - "+nameToShow+". Fala - "+waveToShow));
         graphPanel.setBackground(mainBackgroundColor);
+        JPanel waveType = new JPanel(new GridLayout(4, 1));
+        createWaveButtons(waveType);
         chartPanel.add(listScroller, BorderLayout.BEFORE_LINE_BEGINS);
         chartPanel.add(graphPanel, BorderLayout.CENTER);
+        chartPanel.add(waveType, BorderLayout.AFTER_LINE_ENDS);
+        
         
         JPanel southPanel = new JPanel(new BorderLayout());
         southPanel.add(playerPanel, BorderLayout.SOUTH);
@@ -221,9 +287,89 @@ public class SwingView extends JFrame{
         
         
         
+        
         frame.add(southPanel, BorderLayout.SOUTH);
         
     }
+    
+    private static void createWaveButtons(JPanel panel){
+        panel.setBorder( BorderFactory.createEmptyBorder(8, 3, 3, 3));
+        panel.setBackground(Color.gray.brighter());
+        final JToggleButton alfaButton = createWaveButton("α");
+        final JToggleButton betaButton = createWaveButton("β");
+        final JToggleButton deltaButton = createWaveButton("δ");
+        final JToggleButton thetaButton = createWaveButton("θ");
+        
+        alfaButton.setSelected(true);
+        alfaButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                    if(alfaButton.isSelected()){
+                        betaButton.setSelected(false);
+                        deltaButton.setSelected(false);
+                        thetaButton.setSelected(false);
+                        setNewGraph(0);
+                    }
+                }
+        });
+        betaButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                    if(betaButton.isSelected()){
+                        alfaButton.setSelected(false);
+                        deltaButton.setSelected(false);
+                        thetaButton.setSelected(false);
+                        setNewGraph(1);
+                    }
+                }
+        });
+        deltaButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                    if(deltaButton.isSelected()){
+                        betaButton.setSelected(false);
+                        alfaButton.setSelected(false);
+                        thetaButton.setSelected(false);
+                        setNewGraph(2);
+                    }
+                }
+        });
+        thetaButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                    if(thetaButton.isSelected()){
+                        betaButton.setSelected(false);
+                        deltaButton.setSelected(false);
+                        alfaButton.setSelected(false);
+                        setNewGraph(3);
+                    }
+                }
+        });
+        
+        panel.add(alfaButton);
+        panel.add(betaButton);
+        panel.add(deltaButton);
+        panel.add(thetaButton);
+    }
+    
+    private static void setNewGraph(int value){
+        chosenWave=value;
+        setScore(chosenScore);
+        if(value==0)waveToShow="alfa";
+        if(value==1)waveToShow="beta";
+        if(value==2)waveToShow="delta";
+        if(value==3)waveToShow="theta";
+        graphPanel.setScores(score);
+        lastMaxTime=GlowManager.getMaxTime(chosenScore, chosenWave);
+        lastPlayTime=GlowManager.getTime(lastChannel, chosenWave, numberSlider.getValue());
+        graphPanel.setBorder(BorderFactory.createTitledBorder(blackline, "Wykres - "+nameToShow+". Fala - "+waveToShow));
+        changeTimeLabel();  
+    }
+    
+    private static JToggleButton createWaveButton(String text){
+        JToggleButton button = new JToggleButton(text);
+        button.setToolTipText("Wybór wyświetlanej fali.");
+        button.setBackground(backgroundColor);
+        button.setFocusPainted(false);
+        return button;
+    }
+    
        
     public static void CreateSelectFile(JFrame frame) throws FileNotFoundException{
         String userDir = System.getProperty("user.home");
@@ -294,9 +440,9 @@ public class SwingView extends JFrame{
         toolbar = new JToolBar(null, JToolBar.HORIZONTAL);
         toolbar.setBackground(mainBackgroundColor);
         toolbar.setFloatable(false);
+        toolbar.setOpaque(true);
         toolbar.addSeparator();
 
-        ImageIcon exitIcon = new ImageIcon("assets/Icons/close.png");
         ImageIcon settingsIcon = new ImageIcon("assets/Icons/settings.png");
         ImageIcon openIcon = new ImageIcon("assets/Icons/open.png");
         
@@ -330,66 +476,66 @@ public class SwingView extends JFrame{
         });
         settingsButton.setToolTipText("Ustawienia");
         
-        /*
-        JButton testButton = new JButton(new ImageIcon("assets/Icons/background.png"));
+        
+        
+        JButton testButton = new JButton(new ImageIcon("assets/Icons/brain.png"));
         testButton.setFocusPainted(false);
         toolbar.add(testButton);
         testButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
-                createProgressBar();
+                showChannelsDialog();
             }
+    
         });
         testButton.setToolTipText("Test");
-        */
+        
         
         
         //Podział lewa/prawa toolbara
         toolbar.add(Box.createHorizontalGlue());
 
-        addNewToolBarButton("Włącz/wyłącz wyświetlanie fali delta.","DELTA","delta",0);
-        addNewToolBarButton("Włącz/wyłącz wyświetlanie fali ALFA.","ALFA","alfa",1);
-        addNewToolBarButton("Włącz/wyłącz wyświetlanie fali beta.","BETA","beta",2);
-        addNewToolBarButton("Włącz/wyłącz wyświetlanie fali theta.","THETA","theta",3);
-        addNewToolBarButton("Włącz/wyłącz wyświetlanie fali gamma.","GAMMA","gamma",4);
         
-        JButton exitButton = new JButton(exitIcon);
-        exitButton.setFocusPainted(false);
-        exitButton.setBackground(backgroundColor);
-        toolbar.add(exitButton);
-        exitButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent event) {
-                System.exit(0);
-            }
-        });
-                 
-        exitButton.setToolTipText("Zamknij");
+        addNewToolBarButton("Włącz/wyłącz wyświetlanie fali ALFA.","ALFA",1);
+        addNewColorLabel(alfaLabel, "ALFA");
+        addNewToolBarButton("Włącz/wyłącz wyświetlanie fali beta.","BETA",2);
+        addNewColorLabel(betaLabel, "BETA");
+        addNewToolBarButton("Włącz/wyłącz wyświetlanie fali delta.","DELTA",0);
+        addNewColorLabel(deltaLabel, "DELTA");
+        addNewToolBarButton("Włącz/wyłącz wyświetlanie fali theta.","THETA",3);
+        addNewColorLabel(thetaLabel, "THETA");
         
+
         toolbar.addSeparator();
        
         
         frame.add(toolbar, BorderLayout.NORTH);        
     }
     
+    private void addNewColorLabel(JLabel label, String waveText){
+        ColorRGBA rgba = BrainView.getColor(waveText.toLowerCase());
+        Color color = new Color(rgba.getRed(), rgba.getGreen(), rgba.getBlue(), rgba.getAlpha());
+        label.setBackground(color);
+        label.setMinimumSize(new Dimension(8, 48));
+        label.setMaximumSize(new Dimension(48, 48));
+        label.setBorder(blackline);
+        label.setOpaque(true);
+        toolbar.add(label);
+    }
+    
     
     //Nowy guzik na Toolbarze
-    private void addNewToolBarButton(String toolTip, String waveText, String waveColor, int number){
-        JPanel panel = new JPanel();
-        panel.setMaximumSize(new Dimension(60, 60));
-        panel.setLayout(new GridLayout(2, 1));
-        panel.add(createWaveButton(toolTip,waveText,number));
-        panel.add(createColorButton(waveColor));
-        toolbar.add(panel);
+    private void addNewToolBarButton(String toolTip, String waveText, int number){
+         
         toolbar.addSeparator();
+        toolbar.add(createWaveButton(toolTip,waveText,number)); 
     }
     
     //Button odpowiedzialny za włączenie/wyłączenie wyświetlania danej fali
-    private JToggleButton createWaveButton(String toolTip, String text, final int flipSwitch){
+    private JToggleButton createWaveButton(String toolTip, final String text, final int flipSwitch){
         final JToggleButton button = new JToggleButton(text, true);
         button.setToolTipText(toolTip);
         button.setFocusPainted(false);
-        button.setBackground(backgroundColor);
         BrainView.flipButtonState(flipSwitch, true);
         button.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -397,43 +543,17 @@ public class SwingView extends JFrame{
                     BrainView.flipButtonState(flipSwitch, true);
                     BrainView.setWaveChange(true);
                 }else{
+                    button.setBackground(backgroundColor);
                     BrainView.flipButtonState(flipSwitch, false);
                     BrainView.setWaveChange(true);
                 }
             }
         });
+        button.setMaximumSize(new Dimension(120, 60));
+        button.setMinimumSize(new Dimension(120, 60));
         return button;
     }
     
-    //Button odpowiedzialny za zmianę koloru podświetlania danej fali
-    private JButton createColorButton(final String wave){
-        final JButton button = new JButton(new ImageIcon("assets/Icons/background.png"));
-        button.setToolTipText("Wybierz kolor.");
-        button.setBackground(backgroundColor);
-        ColorRGBA rgba = BrainView.getColor(wave);
-        Color color = new Color(rgba.getRed(), rgba.getGreen(), rgba.getBlue(), rgba.getAlpha());
-        button.setBackground(color);
-
-        button.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                Color initialBackground = button.getBackground();
-                Color background = JColorChooser.showDialog(null, "JColorChooser Sample", initialBackground);
-                if (background != null) {
-                  button.setBackground(background);
-                  BrainView.setColor(wave, background);
-                  BrainView.setWaveChange(true);
-                }
-
-            }
-        });
-        button.setFocusPainted(false);
-        button.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                
-            }
-        });
-        return button;
-    }
     
     //Uruchomienie okna opcji
     private void showSettingsDialog(){
@@ -441,6 +561,13 @@ public class SwingView extends JFrame{
         settingsDialog.pack();
         settingsDialog.setLocationRelativeTo(frame);
         settingsDialog.setVisible(true);
+    }
+    
+    private void showChannelsDialog() {
+       ChannelsDialog channelsDialog = new ChannelsDialog(this);
+       channelsDialog.pack();
+       channelsDialog.setLocationRelativeTo(frame);
+       channelsDialog.setVisible(true);
     }
     
     

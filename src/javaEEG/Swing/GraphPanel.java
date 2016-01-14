@@ -52,12 +52,12 @@ public class GraphPanel extends JPanel {
             graphPoints.add(new Point(x1, y1));
         }
 
-        // draw white background
+        //białe tło
         g2.setColor(Color.WHITE);
         g2.fillRect(padding + labelPadding, padding, getWidth() - (2 * padding) - labelPadding, getHeight() - 2 * padding - labelPadding);
         g2.setColor(Color.BLACK);
 
-        // create hatch marks and grid lines for y axis.
+        // siatka dla y 
         for (int i = 0; i < numberYDivisions + 1; i++) {
             int x0 = padding + labelPadding;
             int x1 = pointWidth + padding + labelPadding;
@@ -75,7 +75,7 @@ public class GraphPanel extends JPanel {
             g2.drawLine(x0, y0, x1, y1);
         }
 
-        // and for x axis
+        // siatka dla x
         for (int i = 0; i < GlowManager.getWidth(); i++) {
             if (scores.size() > 1) {
                 int x0 = i * (getWidth() - padding * 2 - labelPadding) / (GlowManager.getWidth()-1) + padding + labelPadding;
@@ -95,7 +95,7 @@ public class GraphPanel extends JPanel {
             }
         }
 
-        // create x and y axes 
+        // oś x i y
         g2.drawLine(padding + labelPadding, getHeight() - padding - labelPadding, padding + labelPadding, padding);
         g2.drawLine(padding + labelPadding, getHeight() - padding - labelPadding, getWidth() - padding, getHeight() - padding - labelPadding);
 

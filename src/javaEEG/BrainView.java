@@ -40,8 +40,8 @@ public class BrainView extends SimpleApplication {
     private ChaseCamera chaseCam;
 
     //zabawy
-    private static float bloomIntensity = 2.0f;
-    private BloomFilter bloom;
+    private static float bloomIntensity = 1.3f;
+    private static BloomFilter bloom;
     private BitmapText hudBloomIntensity;
     
     //testy poprawnosci wyswietlania czestotliwosci
@@ -53,11 +53,11 @@ public class BrainView extends SimpleApplication {
     private Node pivot;
 
     //Mapa materiałów
-    private HashMap<String, Material> materialMap = 
+    private static HashMap<String, Material> materialMap = 
             new HashMap<String, Material>();
     
     //Mapa objektów
-    private HashMap<String, Spatial> objectMap =
+    private static HashMap<String, Spatial> objectMap =
             new HashMap<String, Spatial>();
     
     //Mapa kolorow
@@ -65,7 +65,7 @@ public class BrainView extends SimpleApplication {
             new HashMap<String, ColorRGBA>();
     
     //Mapa tekstur
-    private HashMap<String, String> glowTextureMap=
+    private static HashMap<String, String> glowTextureMap=
             new HashMap<String, String>();
     
     private int multiplier=1;
@@ -98,16 +98,20 @@ public class BrainView extends SimpleApplication {
     
     //dlugosc tablicy odtwarzania
     private static int arrayLength = 0;
-    private int playerCounter = 0;
-    
-    //wszystkie nazwy obiektów
-    private String[] objectNames = {"Fp1","Fp2","F7","F3","FZ","F4","F8","T3","C3","CZ","C4","T4","T5","P3","PZ","P4","T6","O1","O2"};
-    
     
     //obrót o kąt
     private float rotation=FastMath.PI/270;
     private float previousVerticalRotation = 0;
     private float previousHorizontalRotation = FastMath.PI/2;
+    
+    
+    //ustawienia
+    private static float blurScale = 0.2f;
+    
+    public static void setBloomScale(float newValue){
+        blurScale = newValue;
+        bloom.setBlurScale(blurScale);
+    }
     
     public static void setBloomIntensity(float bloom){
         bloomIntensity=bloom;
@@ -121,6 +125,9 @@ public class BrainView extends SimpleApplication {
     
     public static void setWaveChange(boolean bool){
         waveChange=bool;
+    }
+     public static void setStageChange(boolean bool){
+        stageChange=bool;
     }
     
     public static void flipButtonState(int value, boolean bool){
@@ -153,8 +160,7 @@ public class BrainView extends SimpleApplication {
         settings.setResolution(640,480);
         settings.setTitle("BrainView");
         settings.setAudioRenderer(null);
-
-        
+       
         //Stworzenie aplikacji i uruchomienie jej
         BrainView app = new BrainView();
         app.setShowSettings(false);
@@ -168,13 +174,15 @@ public class BrainView extends SimpleApplication {
         //UStawienie shaderów
         FilterPostProcessor fpp = new FilterPostProcessor(assetManager);
         bloom = new BloomFilter(BloomFilter.GlowMode.Objects);
-        bloom.setBlurScale(0.3f);
+        bloom.setBlurScale(blurScale);
         fpp.addFilter(bloom);
         viewPort.addProcessor(fpp);
         
 
         //wyłączenie statystyk
         setDisplayStatView(false);
+        setDisplayFps(false);
+        
         
         Display.setResizable(true);
        
@@ -213,7 +221,7 @@ public class BrainView extends SimpleApplication {
         chaseCam = new ChaseCamera(cam, rootNode, inputManager);
         chaseCam.setDefaultHorizontalRotation(FastMath.PI/2);
         chaseCam.setDefaultVerticalRotation(0);
-        chaseCam.setDefaultDistance(10);
+        chaseCam.setDefaultDistance(11);
         chaseCam.setRotationSensitivity(10f);
         chaseCam.setMinDistance(10);
         chaseCam.setMaxDistance(20);
@@ -239,8 +247,8 @@ public class BrainView extends SimpleApplication {
     
     private void pulse(){
         bloom.setBloomIntensity(bloomIntensity);
-        bloomIntensity+=multiplier*0.7;
-        if(bloomIntensity>=8)
+        bloomIntensity+=multiplier*0.5;
+        if(bloomIntensity>=5)
             multiplier=-1;
         else if(bloomIntensity<=1)
             multiplier=1;
@@ -274,7 +282,7 @@ public class BrainView extends SimpleApplication {
             if(currentTimeForPlayer - totalTimePlayer >= oneSecond){
                 totalTimePlayer=currentTimeForPlayer;
                 if(playingStartCounter<=arrayLength){
-                    for(int i=0; i<4;i++)
+                    for(int i=0; i<GlowManager.channels.length;i++)
                         changeMaterial(i,playingStartCounter);
                     SwingView.setSlider(playingStartCounter);
                     lastChange=playingStartCounter;
@@ -286,7 +294,7 @@ public class BrainView extends SimpleApplication {
         }
         
         if(waveChange){
-            for(int i=0; i<4;i++)
+            for(int i=0; i<GlowManager.channels.length;i++)
                 changeMaterial(i,lastChange);     
             waveChange=false;
         }
@@ -317,15 +325,8 @@ public class BrainView extends SimpleApplication {
     
     private void fillGlowTetureMap() {
         
-        /*
-        glowTextureMap.put("front_rh", "Textures/glowMaps/front_rh_glow.png");
-        glowTextureMap.put("back_rh", "Textures/glowMaps/back_rh_glow.png");
-        glowTextureMap.put("front_lh", "Textures/glowMaps/front_lh_glow.png");
-        glowTextureMap.put("back_lh", "Textures/glowMaps/back_lh_glow.png");
-        */
-        
-        for(int i=0; i<objectNames.length;i++){
-            loadGlowTexture(objectNames[i]);
+        for(int i=0; i<GlowManager.objectNames.length;i++){
+            loadGlowTexture(GlowManager.objectNames[i]);
         }
 
     }
@@ -338,14 +339,26 @@ public class BrainView extends SimpleApplication {
     
     
     public void changeMaterial(int channel, int stageNumber){
-        String glowColor = GlowManager.getColor(channel, stageNumber);
+        String glowColor = GlowManager.getColor(channel,SwingView.getChosenWave(),stageNumber);
+        String objectName = GlowManager.channelsMap.get(GlowManager.channels[channel]);
         if(glowColor.equals("noColor")){
-            removeGlowMaterial(objectNames[channel]);
+            removeGlowMaterial(objectName);
         }else{
-            addGlowMaterial(objectNames[channel], colorMap.get(glowColor), glowTextureMap.get(objectNames[channel]));   
+            addGlowMaterial(objectName, colorMap.get(glowColor), glowTextureMap.get(objectName));   
         }
     }
     
+    
+    public static void removeAllGlow(){
+        for(int i=0; i<GlowManager.objectNames.length;i++){
+            String objectName = GlowManager.objectNames[i];
+            Material selectedMaterial = materialMap.get(objectName).clone();
+            selectedMaterial.setTexture("GlowMap", null);
+            //Zmiana materiału zaznaczonego obiektu
+            objectMap.get(objectName).setMaterial(selectedMaterial);
+        }
+    }
+
     
     
     private void removeGlowMaterial(String objectName){
@@ -355,6 +368,7 @@ public class BrainView extends SimpleApplication {
         //Zmiana materiału zaznaczonego obiektu
         objectMap.get(objectName).setMaterial(selectedMaterial);
     }
+    
     
     //dodanie podświetlonego obszaru
     private void addGlowMaterial(String objectName, ColorRGBA glowColor, String glowMapTexture){
@@ -369,9 +383,16 @@ public class BrainView extends SimpleApplication {
    
     }
     
-    
+    //Obracanie przy pomocy strzałek kierunkowych
     private AnalogListener analogListener = new AnalogListener() {
-        public void onAnalog(String binding, float value, float tpf) {    
+        public void onAnalog(String binding, float value, float tpf) {
+            
+            if(previousHorizontalRotation!=chaseCam.getHorizontalRotation() &&
+                    previousVerticalRotation!=chaseCam.getVerticalRotation()){
+                previousHorizontalRotation=chaseCam.getHorizontalRotation();
+                previousVerticalRotation=chaseCam.getVerticalRotation();
+            }
+                
             if (binding.equals("leftRot")) {
                 chaseCam.setDefaultHorizontalRotation(previousHorizontalRotation+rotation);
                 previousHorizontalRotation+=rotation;
@@ -395,17 +416,6 @@ public class BrainView extends SimpleApplication {
     private ActionListener actionListener = new ActionListener() {
         public void onAction(String binding, boolean keyPressed, float tpf) {
 
-            /*
-            if (binding.equals("Pause") && keyPressed) {
-                if(stopStart)
-                    stopStart=false;
-                    else
-                        stopStart=true;
-            } 
-            */
-            
-            
-            
             if (binding.equals("Space") && keyPressed) {
                 chaseCam.setDefaultHorizontalRotation(FastMath.PI/2);
                 chaseCam.setDefaultVerticalRotation(0);
@@ -491,8 +501,8 @@ public class BrainView extends SimpleApplication {
         //Stworzenie nowego zaczepu
         pivot = new Node("pivot");
         
-        for(int i=0; i<objectNames.length;i++){
-            loadPartElements(objectNames[i]);
+        for(int i=0; i<GlowManager.objectNames.length;i++){
+            loadPartElements(GlowManager.objectNames[i]);
         }
         
         addNewBrainPart("bottom", "Models/full/bottom.j3o", "Textures/colorMap/bottom.png");

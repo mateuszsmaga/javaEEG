@@ -1,20 +1,30 @@
 package javaEEG.Swing;
+import com.jme3.math.ColorRGBA;
+import java.awt.Color;
 import java.awt.Container;
-import java.awt.Font;
 import java.awt.Frame;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import javax.swing.GroupLayout;
-import static javax.swing.GroupLayout.Alignment.CENTER;
+import java.util.Hashtable;
+import javaEEG.BrainView;
+import static javaEEG.Swing.SwingView.backgroundColor;
+import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JComponent;
+import javax.swing.JColorChooser;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JSlider;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 
 //Okno ustawień
 class SettingsDialog extends JDialog {
+    
+    private Container pane = getContentPane();
+    Hashtable labelTable = new Hashtable();
 
     public SettingsDialog(Frame parent) {
         super(parent);
@@ -23,23 +33,8 @@ class SettingsDialog extends JDialog {
     }
 
     private void initUI() {
-
-        ImageIcon icon = new ImageIcon("assets/Icons/warning.png");
-        JLabel label = new JLabel(icon);
-
-        JLabel name = new JLabel("Tutaj kiedyś będą ustawienia!");
-        name.setFont(new Font("Serif", Font.BOLD, 13));
-
-        JButton btn = new JButton("Chyba");
-        btn.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent event) {
-                dispose();
-            }
-        });
-
-        createLayout(name, label, btn);
+        getRootPane().setBorder( BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        createLayout();
 
         setModalityType(ModalityType.APPLICATION_MODAL);
 
@@ -48,32 +43,95 @@ class SettingsDialog extends JDialog {
         setLocationRelativeTo(getParent());
     }
 
-    private void createLayout(JComponent... arg) {
-
-        Container pane = getContentPane();
-        GroupLayout gl = new GroupLayout(pane);
-        pane.setLayout(gl);
-
-        gl.setAutoCreateContainerGaps(true);
-        gl.setAutoCreateGaps(true);
-
-        gl.setHorizontalGroup(gl.createParallelGroup(CENTER)
-                .addComponent(arg[0])
-                .addComponent(arg[1])
-                .addComponent(arg[2])
-                .addGap(200)
-        );
-
-        gl.setVerticalGroup(gl.createSequentialGroup()
-                .addGap(30)
-                .addComponent(arg[0])
-                .addGap(20)
-                .addComponent(arg[1])
-                .addGap(20)
-                .addComponent(arg[2])
-                .addGap(30)
-        );
+    private void createLayout() {
+        GridLayout layout = new GridLayout(5, 2);
+        layout.setVgap(10);
+        layout.setHgap(10);
+        pane.setLayout(layout);
+        addNewElement("Intensywność podświetlenia");
+        final JSlider slider = new JSlider(0, 20);
+        
+        createNewLabelTable(5);
+        slider.setLabelTable(labelTable);
+        slider.setPaintLabels(true);
+        slider.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                float value = slider.getValue()/10.0f;
+                BrainView.setBloomScale(value);
+                System.out.println("Value changed to:"+value);
+            }
+        });
+        pane.add(slider);
+        
+        createColorOption("alfa");
+        createColorOption("beta");
+        createColorOption("delta");
+        createColorOption("theta");
 
         pack();
+    }
+    
+    private void createColorOption(String text){
+        text=text.toUpperCase();
+        addNewElement("Kolor podświetlenia dla fali "+text);
+        text=text.toLowerCase();
+        pane.add(createColorButton(text));
+    }
+    
+    //Button odpowiedzialny za zmianę koloru podświetlania danej fali
+    private JButton createColorButton(final String wave){
+        final JButton button = new JButton(new ImageIcon("assets/Icons/background.png"));
+        button.setToolTipText("Wybierz kolor.");
+        button.setBackground(backgroundColor);
+        ColorRGBA rgba = BrainView.getColor(wave);
+        Color color = new Color(rgba.getRed(), rgba.getGreen(), rgba.getBlue(), rgba.getAlpha());
+        button.setBackground(color);
+
+        button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                Color initialBackground = button.getBackground();
+                Color background = JColorChooser.showDialog(null, "JColorChooser Sample", initialBackground);
+                if (background != null) {
+                  button.setBackground(background);
+                  BrainView.setColor(wave, background);
+                  BrainView.setWaveChange(true);
+                  if(wave.equals("alfa")){
+                      SwingView.alfaLabel.setBackground(background);
+                  }else if(wave.equals("beta")){
+                      SwingView.betaLabel.setBackground(background);
+                  }else if(wave.equals("delta")){
+                      SwingView.deltaLabel.setBackground(background);
+                  }else if(wave.equals("theta")){
+                      SwingView.thetaLabel.setBackground(background);
+                  }
+                      
+                }
+
+            }
+        });
+        button.setFocusPainted(false);
+
+        return button;
+    }
+    
+    //Tworzenie tabeli podziałek
+    private void createNewLabelTable(int numberOfTicks){
+        labelTable.clear();
+        for(int i=0; i<numberOfTicks; i++){
+            float text = i*0.5f;
+            String label = String.valueOf(text);
+            labelTable.put(new Integer(i*5), new JLabel(label));
+        }
+    }
+    
+    private void createNewSlider(){
+        
+    }
+    
+    
+    private void addNewElement(String text){
+        JLabel label = new JLabel(text);
+        pane.add(label);
+        
     }
 }
